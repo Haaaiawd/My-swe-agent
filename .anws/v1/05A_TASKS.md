@@ -295,7 +295,7 @@ graph TD
   - **依赖**: T2.1.1
   - **优先级**: P0
 
-- [ ] **T2.2.4** [REQ-004]: 实现 Observer（结果观测 + 提交标记检测）
+- [x] **T2.2.4** [REQ-004]: 实现 Observer（结果观测 + 提交标记检测）
   - **描述**: 实现 `observe_result(execution_result, config)` 检测提交标记（基于 `stdout_original`，ANSI 去除 + Unicode normalize + lstrip + splitlines 取首行精确匹配 `COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`，returncode==0），调用 TemplateRenderer 渲染观测模板（失败时降级为原始输出），返回 `Observation`
   - **输入**: `core-agent.detail.md §3.4 observe_result 算法`、`ADR_006_SUBMISSION_CONTRACT.md §提交标记`、`T2.1.1 产出的 models.py`、`T2.2.2 产出的 executor.py`（stdout_original）
   - **输出**: `src/core/observer.py`（`observe_result` 函数）
@@ -322,7 +322,7 @@ graph TD
   - **依赖**: T2.1.1, T2.2.2
   - **优先级**: P0
 
-- [ ] **T2.2.5** [REQ-005]: 实现 ModelAdapter（模型适配器）
+- [x] **T2.2.5** [REQ-005]: 实现 ModelAdapter（模型适配器）
   - **描述**: 实现 `call_model(messages, config)` 使用 litellm 调用 LLM API，支持 tool-call/文本两种响应模式，tenacity 重试 5 次（仅针对 litellm 瞬态异常，不重试 FormatError/AuthenticationError），成本计费（优先 API cost，备选 token-based 估算，缺失时按 `cost_missing_strategy` 处理），响应扁平化为对话消息，在 message 中追加 `cost_calculation_method` 字段
   - **输入**: `core-agent.detail.md §3.3 call_model 算法`、`ADR_003_ERROR_HANDLING.md §重试策略`、`ADR_007_MODEL_ADAPTER_PROTOCOL.md`、`T2.1.1 产出的 models.py`
   - **输出**: `src/core/model_adapter.py`（`ModelAdapter` 类，`call_model` 方法）
@@ -349,7 +349,7 @@ graph TD
   - **依赖**: T2.1.1
   - **优先级**: P0
 
-- [ ] **T2.2.6** [REQ-006]: 实现 TrajectoryManager（轨迹记录器）
+- [x] **T2.2.6** [REQ-006]: 实现 TrajectoryManager（轨迹记录器）
   - **描述**: 实现轨迹管理器，流式写入 JSON Lines（每步一行，每 100 步自动刷新至临时文件），最终 `save_trajectory()` 合并为单 JSON 对象（schema_version v1_jsonl），tool-call 模式下观测结果与 `tool_call_id` 关联，`save_trajectory` 失败时（OSError/磁盘满）尝试备用临时路径
   - **输入**: `core-agent.detail.md §2 Trajectory 类`、`ADR_008_TRAJECTORY_FORMAT.md`、`T2.1.1 产出的 models.py`
   - **输出**: `src/core/trajectory.py`（`TrajectoryManager` 类）
