@@ -177,7 +177,7 @@ graph TD
   - **依赖**: T1.1.2, T1.1.3, T1.1.4
   - **优先级**: P0
 
-- [ ] **INT-S1** [MILESTONE]: S1 集成验证 — Foundation
+- [x] **INT-S1** [MILESTONE]: S1 集成验证 — Foundation
   - **描述**: 验证 Config System 全链路正确，项目骨架可运行
   - **输入**: S1 所有任务产出（T1.1.1～T1.1.5）
   - **输出**: 集成验证报告（通过/失败 + Bug 清单）
