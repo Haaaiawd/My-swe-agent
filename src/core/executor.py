@@ -56,7 +56,7 @@ def execute_command(command: str, timeout: float = 10.0) -> ExecutionResult:
             stdout_original="",
             exception_metadata={"error_type": "TIMEOUT"},
         )
-    except OSError as e:
+    except (OSError, ValueError, TypeError) as e:
         return ExecutionResult(
             returncode=-1,
             stdout="",

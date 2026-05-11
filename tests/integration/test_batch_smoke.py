@@ -7,12 +7,9 @@ Coverage: preds.json schema structure after batch run.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from cli.batch import (
     BatchConfig,

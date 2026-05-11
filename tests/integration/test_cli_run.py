@@ -82,8 +82,8 @@ def test_run_config_error_writes_diagnostic(
     """Given broken config, diagnostic JSON is written and exit code is 13."""
     monkeypatch.setattr(sys, "exit", _raising_exit)
 
-    with patch("cli.main.ConfigManager") as MockMgr, pytest.raises(SystemExit) as exc_info:
-        mgr = MockMgr.return_value
+    with patch("cli.main.ConfigManager") as mock_mgr, pytest.raises(SystemExit) as exc_info:
+        mgr = mock_mgr.return_value
         from config import ConfigError
 
         mgr.load_config.side_effect = ConfigError(

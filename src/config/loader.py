@@ -46,6 +46,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "output": {
         "trajectory_path": None,
         "observation_max_length": 10000,
+        "observation_template": "{{ stdout }}",
     },
 }
 
@@ -81,6 +82,7 @@ class ConfigLoader:
                 f"Jinja2 syntax error in {path}: {e}",
                 file_path=path,
                 line=e.lineno,
+                variable=None,
             ) from e
 
         # Step 2: YAML parse
@@ -92,6 +94,8 @@ class ConfigLoader:
             raise ConfigError(
                 f"YAML syntax error in {path}: {error_msg}",
                 file_path=path,
+                line=getattr(e, "problem_mark", None) and getattr(e.problem_mark, "line", None),
+                variable=None,
             ) from e
 
         return result or {}

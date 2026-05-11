@@ -283,13 +283,26 @@ def batch_run(batch_config: BatchConfig) -> int:
                 logger.error("Instance %s failed: %s", inst.get("instance_id"), exc)
                 failed_count += 1
 
+    # Build trajectory_path -> instance_id mapping for robust lookup
+    traj_to_instance_id = {
+        batch_config.output_dir
+        / f"trajectory_{inst.get('instance_id', 'unknown')}.jsonl": inst.get(
+            "instance_id", "unknown"
+        )
+        for inst in tasks_to_run
+    }
+
     # Aggregate preds.json: only SUBMITTED (returncode==0) with non-empty overall_output
     preds = []
     for result in results:
         if result.returncode == 0 and result.overall_output:
+            instance_id = traj_to_instance_id.get(
+                result.trajectory_path,
+                _extract_instance_id(result.trajectory_path),
+            )
             preds.append(
                 PredEntry(
-                    instance_id=_extract_instance_id(result.trajectory_path),
+                    instance_id=instance_id,
                     model_name_or_path=result.model_name,
                     model_patch=result.overall_output,
                 )
@@ -319,10 +332,19 @@ def batch_run(batch_config: BatchConfig) -> int:
 
 
 def _extract_instance_id(trajectory_path: Path) -> str:
-    """Extract instance_id from trajectory file path.
+    """Extract instance_id from trajectory file.
 
-    Expects path like .../trajectory_<instance_id>.jsonl
+    First tries to read 'instance_id' from the trajectory JSON metadata,
+    then falls back to parsing the filename (trajectory_<id>.jsonl).
     """
+    try:
+        with open(trajectory_path, encoding="utf-8") as f:
+            data = json.load(f)
+        if "instance_id" in data:
+            return str(data["instance_id"])
+    except (OSError, json.JSONDecodeError):
+        pass
+
     stem = trajectory_path.stem
     if stem.startswith("trajectory_"):
         return stem[len("trajectory_") :]

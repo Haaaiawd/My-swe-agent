@@ -1,4 +1,4 @@
-"""StateMachine: core state-machine loop (MODEL → PARSE → VALIDATE → EXECUTE → OBSERVE).
+"""StateMachine: core state-machine loop (MODEL → PARSE → (VALIDATE) → EXECUTE → OBSERVE).
 
 The loop continues until a terminal state is reached.  Signal handlers
 capture SIGINT / SIGTERM and transition to INTERRUPT.
