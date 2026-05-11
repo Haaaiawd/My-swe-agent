@@ -156,7 +156,7 @@ graph TD
   - **依赖**: T1.1.1
   - **优先级**: P0
 
-- [ ] **T1.1.5** [REQ-007]: 实现 ConfigManager（组合 + 脱敏）
+- [x] **T1.1.5** [REQ-007]: 实现 ConfigManager（组合 + 脱敏）
   - **描述**: 实现 ConfigManager 顶层组合类，集成 Loader+Merger+Renderer，实现 `_redact()` 递归脱敏（api_key/password/token/secret），支持配置缓存与清除
   - **输入**: `04_SYSTEM_DESIGN/config.md §5 操作契约`、`config.detail.md §2.1 ConfigManager`、`T1.1.2 产出的 loader.py`、`T1.1.3 产出的 merger.py`、`T1.1.4 产出的 renderer.py`
   - **输出**: `src/config/config_manager.py`（`ConfigManager` 类），`src/config/__init__.py`
