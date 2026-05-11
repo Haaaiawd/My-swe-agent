@@ -102,6 +102,14 @@ T1.1.5
 INT-S1
 签名: AUTO
 
+### 🌊 Wave 5 ✅ — Sprint 2: 核心数据结构定义
+T2.1.1
+签名: AUTO
+
+### 🌊 Wave 6 — Sprint 2: Core 内部组件（Phase 2 上篇）
+T2.2.1, T2.2.2, T2.2.3
+签名: AUTO
+
 
 
 ---

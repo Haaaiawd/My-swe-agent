@@ -196,7 +196,7 @@ graph TD
 
 ### Phase 1: Foundation（数据结构）
 
-- [ ] **T2.1.1** [REQ-001]: 定义核心数据结构
+- [x] **T2.1.1** [REQ-001]: 定义核心数据结构
   - **描述**: 定义 `State` 枚举（6 终态）、`Protocol` 枚举、`ExecutionResult`（含 `stdout_original`）、`Observation`、`ModelResponse`、`Trajectory`、`StateMachineContext`、`FormatError`、`CommandValidationError`、`CostMissingError` 等所有核心数据结构
   - **输入**: `core-agent.detail.md §1 配置常量`、`core-agent.detail.md §2 完整数据结构`、`ADR_006_SUBMISSION_CONTRACT.md`（ExecutionResult.stdout_original）、`ADR_007_MODEL_ADAPTER_PROTOCOL.md`（CostMissingError）
   - **输出**: `src/core/models.py`
