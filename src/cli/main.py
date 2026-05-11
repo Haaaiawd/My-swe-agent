@@ -303,13 +303,19 @@ def batch_cmd(
     sys.exit(exit_code)
 
 
-# ── check subcommand (placeholder) ────────────────────────────
+# ── check subcommand ────────────────────────────────────────────
 
 
 @cli.command(name="check", help="Inspect a trajectory file (TUI).")
-def check_cmd() -> None:
-    """Placeholder for the check subcommand (T3.1.4)."""
-    click.echo("check: not yet implemented (T3.1.4)")
+@click.argument(
+    "trajectory",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+)
+def check_cmd(trajectory: Path) -> None:
+    """Launch Textual TUI to inspect a trajectory JSON file."""
+    from cli.checker import check_trajectory
+
+    check_trajectory(trajectory)
 
 
 # ── Entry-point ─────────────────────────────────────────────
