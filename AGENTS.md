@@ -122,6 +122,37 @@ T2.3.1
 INT-S2
 签名: AUTO
 
+### 🌊 Wave 10 ✅ — Sprint 3: T3.1.1 CLI 骨架确认 + T3.1.5 退出码映射
+- T3.1.1: src/cli/main.py 骨架验证通过（--help 含 run/batch/check + 风险警示）
+- T3.1.5: src/cli/exit_codes.py + tests/unit/test_exit_codes.py（7 passed）
+签名: AUTO
+
+### 🌊 Wave 11 ✅ — Sprint 3: T3.1.2 run 子命令完整实现
+- src/cli/main.py run 子命令：--config/--model/--yolo/--step-limit/--cost-limit/--output/--verbose
+- ConfigError 诊断文件写入，--model 仅覆盖 model.name，退出码映射
+- tests/integration/test_cli_run.py（4 passed）
+签名: AUTO
+
+### 🌊 Wave 12 ✅ — Sprint 3: T3.1.3 batch 子命令
+- src/cli/batch.py: BatchConfig/PredEntry/BatchResult, ProcessPoolExecutor 并发,
+  _should_run_instance 轨迹完整性，preds.json SWE-bench schema
+- tests/unit/test_batch.py + tests/integration/test_batch_smoke.py
+签名: AUTO
+
+### 🌊 Wave 13 ✅ — Sprint 3: T3.1.4 check 子命令 (Textual TUI)
+- src/cli/checker.py: TrajectoryChecker Textual App，DataTable，ANSI 剥离，NUL 替换
+签名: AUTO
+
+### 🌊 Wave 14 ✅ — Sprint 3: T3.1.6 README 完整文档
+- README.md: 安装指南、配置优先级、退出码对照表、环境变量、快速开始
+签名: AUTO
+
+### 🌊 Wave 15 ✅ — Sprint 3: INT-S3 S3 集成验证
+- 全量测试: 137 passed（115 unit + 22 integration）
+- CLI help: run/batch/check 三子命令全链路可用
+- ruff 全绿
+签名: AUTO
+
 
 
 ---
