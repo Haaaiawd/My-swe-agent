@@ -66,7 +66,7 @@ graph TD
 
 ### Phase 1: Foundation
 
-- [ ] **T1.1.1** [基础]: 初始化项目骨架
+- [x] **T1.1.1** [基础]: 初始化项目骨架
   - **描述**: 创建标准 Python 项目目录结构，配置 pyproject.toml 依赖、ruff lint、mypy 可选类型检查
   - **输入**: `02_ARCHITECTURE_OVERVIEW.md §5 项目结构`、`ADR_001_TECH_STACK.md §技术栈`
   - **输出**: 完整目录树（`src/config/`, `src/core/`, `src/cli/`, `tests/unit/`, `tests/integration/`, `tests/e2e/`）、`pyproject.toml`、`README.md` 骨架

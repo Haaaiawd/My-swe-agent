@@ -86,8 +86,12 @@
 - **待办任务数: 19 个开发任务 + 3 个 INT 里程碑（分 3 个 Sprint）
 - **最近一次更新: `2026-05-11` (Challenge Round 4 双重审查 + /change 修复完成；CH-R4-01 Critical 防循环计数器已补充；CH-R4-02 VALIDATE 文档一致性已修复；CH-R4-03 cost_estimate_per_call 默认值已定义；TK-R4-01 T3.1.6 验证计划已补充；门禁 APPROVED，可进入 /forge)
 
-### 🌊 Wave 1 — S1 Foundation: 项目骨架初始化
+### 🌊 Wave 1 ✅ — S1 Foundation: 项目骨架初始化
 T1.1.1
+签名: AUTO
+
+### 🌊 Wave 2 — S1 Foundation: Config 内部组件
+T1.1.2, T1.1.3, T1.1.4
 签名: AUTO
 
 
