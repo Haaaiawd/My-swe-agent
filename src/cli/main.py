@@ -15,6 +15,7 @@ Test coverage: tests/integration/test_cli_run.py, tests/unit/test_exit_codes.py.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -202,13 +203,104 @@ def run_cmd(
     sys.exit(cli_exit)
 
 
-# ── batch subcommand (placeholder) ────────────────────────────
+# ── batch subcommand ──────────────────────────────────────────
 
 
 @cli.command(name="batch", help="Batch process multiple tasks.")
-def batch_cmd() -> None:
-    """Placeholder for the batch subcommand (T3.1.3)."""
-    click.echo("batch: not yet implemented (T3.1.3)")
+@click.argument("dataset", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option(
+    "--config",
+    "-c",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Path to the global YAML configuration file.",
+)
+@click.option(
+    "--workers",
+    "-w",
+    type=int,
+    default=None,
+    help="Number of parallel workers (default: CPU count, cap=64).",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=Path("./preds.json"),
+    help="Path for preds.json output.",
+)
+@click.option(
+    "--output-dir",
+    "-d",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=Path("./outputs"),
+    help="Directory for trajectory files.",
+)
+@click.option(
+    "--filter",
+    type=str,
+    default=None,
+    help="Regex filter for instance_id.",
+)
+@click.option(
+    "--slice",
+    type=str,
+    default=None,
+    help="Slice range 'start:stop' for the dataset.",
+)
+@click.option(
+    "--shuffle-seed",
+    type=int,
+    default=None,
+    help="Deterministic shuffle seed.",
+)
+@click.option(
+    "--redo-existing",
+    is_flag=True,
+    default=False,
+    help="Re-run instances that already have trajectories.",
+)
+@click.option("--yolo", is_flag=True, default=False, help="Skip confirmation prompt.")
+def batch_cmd(
+    dataset: Path,
+    config: Path,
+    workers: int | None,
+    output: Path,
+    output_dir: Path,
+    filter: str | None,
+    slice: str | None,
+    shuffle_seed: int | None,
+    redo_existing: bool,
+    yolo: bool,
+) -> None:
+    """Batch process a dataset directory containing instance.jsonl."""
+    from cli.batch import BatchConfig, batch_run
+
+    _print_risk_banner()
+    if not yolo and not _confirm_continue():
+        sys.exit(EXIT_CODES["USER_DECLINED"])
+
+    slice_range: tuple[int, int] | None = None
+    if slice is not None:
+        parts = slice.split(":")
+        if len(parts) != 2:
+            raise click.BadParameter("slice must be 'start:stop'")
+        slice_range = (int(parts[0]), int(parts[1]))
+
+    batch_config = BatchConfig(
+        dataset_path=dataset,
+        global_config_path=config,
+        workers=workers if workers is not None else (os.cpu_count() or 1),
+        filter_regex=filter,
+        slice_range=slice_range,
+        shuffle_seed=shuffle_seed,
+        redo_existing=redo_existing,
+        output_path=output,
+        output_dir=output_dir,
+    )
+
+    exit_code = batch_run(batch_config)
+    sys.exit(exit_code)
 
 
 # ── check subcommand (placeholder) ────────────────────────────
