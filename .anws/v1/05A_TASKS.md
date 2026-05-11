@@ -421,7 +421,7 @@ graph TD
 
 ### Phase 1: Foundation
 
-- [ ] **T3.1.1** [REQ-010]: 实现 CLI 主命令框架
+- [x] **T3.1.1** [REQ-010]: 实现 CLI 主命令框架
   - **描述**: 使用 click 实现 CLI 主命令入口，注册 `run` / `batch` / `check` 三个子命令占位；`--help` 中包含风险警示文案（"⚠️ This tool executes shell commands automatically"）；主命令支持 `--version`
   - **输入**: `04_SYSTEM_DESIGN/cli-system.md §4 架构图`、`04_SYSTEM_DESIGN/cli-system.md §5 接口设计`、`cli-system.detail.md §1 CLI_DEFAULTS`
   - **输出**: `src/cli/main.py`（click group，三个子命令占位）、`src/cli/__init__.py`
@@ -439,7 +439,7 @@ graph TD
   - **依赖**: INT-S2
   - **优先级**: P0
 
-- [ ] **T3.1.2** [REQ-010]: 实现 `run` 子命令
+- [x] **T3.1.2** [REQ-010]: 实现 `run` 子命令
   - **描述**: 实现单任务执行子命令：解析 `--config`/`--model`/`--yolo`/`--step-limit`/`--cost-limit`/`--output` 参数，调用 ConfigManager 加载配置（ConfigError 时写入最小化诊断文件并以 exitcode=13 退出），调用 `Agent.run()`，按 `EXIT_CODES` 映射终态到进程退出码；`--model` 仅覆盖 `config["model"]["name"]`，不覆盖其他嵌套字段
   - **输入**: `cli-system.detail.md §3.1 run() 算法`、`cli-system.detail.md §1 EXIT_CODES`、`T3.1.1 产出的 main.py`、`T2.3.1 产出的 agent.py`、`T1.1.5 产出的 config_manager.py`
   - **输出**: `src/cli/main.py`（`run` 子命令完整实现）
@@ -463,7 +463,7 @@ graph TD
   - **依赖**: T3.1.1, T2.3.1, T1.1.5
   - **优先级**: P0
 
-- [ ] **T3.1.3** [REQ-008]: 实现 `batch` 子命令
+- [x] **T3.1.3** [REQ-008]: 实现 `batch` 子命令
   - **描述**: 实现批处理子命令：`BatchConfig` 构建与校验（workers cap、slice_range、filter_regex、shuffle_seed、redo_existing）；multiprocessing 并发调度；`_should_run_instance()` 轨迹完整性校验（检查 `final_state` 字段）；聚合 `PredEntry` 写入 `preds.json`（含 `model_name_or_path` 字段，符合 SWE-bench schema）；批处理轨迹命名为 `{output_dir}/trajectory_{instance_id}.jsonl`
   - **输入**: `cli-system.detail.md §3.2 run_batch() 算法`、`cli-system.detail.md §2.1 BatchConfig`、`cli-system.detail.md §2.2 PredEntry`、`T3.1.1 产出的 main.py`、`T2.3.1 产出的 agent.py`
   - **输出**: `src/cli/batch.py`（`BatchRunner` 类），`src/cli/main.py`（`batch` 子命令）
@@ -487,7 +487,7 @@ graph TD
   - **依赖**: T3.1.1, T2.3.1
   - **优先级**: P0
 
-- [ ] **T3.1.4** [REQ-009]: 实现 `check` 子命令（Textual TUI 检查器）
+- [x] **T3.1.4** [REQ-009]: 实现 `check` 子命令（Textual TUI 检查器）
   - **描述**: 实现 Textual TUI 轨迹检查器：按步骤聚合（step_index 分组）；高亮 FormatError/CommandValidationError 步骤（`bold reverse red` 样式）；ANSI 转义序列剥离；NUL 字符替换为 `␀`；显示 step 表格（Step/Action/Status/Cost 列）；支持键盘导航（上下键翻步骤，`q` 退出）
   - **输入**: `cli-system.detail.md §3.3 run_checker() 算法`、`cli-system.detail.md §1 CHECKER_CONFIG`、`T3.1.1 产出的 main.py`、`T2.2.6 产出的 trajectory.py`（轨迹 JSON 格式）
   - **输出**: `src/cli/checker.py`（`TrajectoryChecker` Textual App），`src/cli/main.py`（`check` 子命令）
@@ -509,7 +509,7 @@ graph TD
   - **依赖**: T3.1.1, T2.2.6
   - **优先级**: P1
 
-- [ ] **T3.1.5** [REQ-010]: 实现退出码映射完整性
+- [x] **T3.1.5** [REQ-010]: 实现退出码映射完整性
   - **描述**: 实现并验证 CLI 层 `EXIT_CODES` 与 Core Agent `AgentResult.returncode` 的语义分离映射（CLI：SUCCESS=0/AGENT_LIMIT_STEP=10/AGENT_LIMIT_COST=11/AGENT_INTERRUPT=12/AGENT_FATAL_CONFIG=13/AGENT_UNKNOWN_ERROR=14/BATCH_PARTIAL_FAILURE=20/USER_DECLINED=21/INTERRUPTED=130；Core：SUBMITTED=0/LIMIT_STEP=2/LIMIT_COST=3/INTERRUPT=4/FATAL_CONFIG=5/UNKNOWN_ERROR=6）
   - **输入**: `cli-system.detail.md §1 EXIT_CODES`、`core-agent.detail.md §1 State 枚举`、`T3.1.2 产出的 run 子命令`
   - **输出**: `src/cli/exit_codes.py`（`map_agent_result_to_exit_code` 函数），退出码更新到 `README.md`
@@ -533,7 +533,7 @@ graph TD
   - **依赖**: T3.1.1
   - **优先级**: P0
 
-- [ ] **T3.1.6** [REQ-010]: 编写 README 完整文档
+- [x] **T3.1.6** [REQ-010]: 编写 README 完整文档
   - **描述**: 编写完整 README：项目说明、安装指南、Python 版本要求、配置优先级说明（CLI > 文件 > env > 默认值）、环境变量启用方式（`MINI_SWE_ENABLE_E2E`、`MINI_SWE_ENABLE_LIVE_API`）、退出码语义对照表、风险警示文案、快速开始示例
   - **输入**: `ADR-001 §后续行动`、`ADR-002 §测试启用策略`、`ADR-004 §配置优先级`、`cli-system.detail.md §1 EXIT_CODES`、`T3.1.5 产出的退出码映射`
   - **输出**: `README.md`
@@ -554,7 +554,7 @@ graph TD
   - **依赖**: T1.1.1, T3.1.5
   - **优先级**: P0
 
-- [ ] **INT-S3** [MILESTONE]: S3 集成验证 — CLI & Polish
+- [x] **INT-S3** [MILESTONE]: S3 集成验证 — CLI & Polish
   - **描述**: 验证三子命令全链路可用，批处理 preds.json schema 正确，退出码语义正确
   - **输入**: S3 所有任务产出（T3.1.1～T3.1.5）
   - **输出**: 集成验证报告（通过/失败 + Bug 清单）
