@@ -1,0 +1,112 @@
+{
+  "glossary": {
+    "Model": "大语言模型，生成助手消息（含自然语言与 THOUGHT）",
+    "Parser": "解析器，从助手输出中抽取恰好一个可执行动作",
+    "Executor": "执行器，运行 Shell 命令",
+    "Observer": "观测器，捕获执行结果",
+    "Trajectory": "轨迹记录，完整对话历史与执行元数据",
+    "Config": "配置系统（YAML + Jinja2，多源合并）",
+    "CLI": "命令行界面（单任务模式 + 批处理模式）",
+    "Checker": "Textual 检查器，可视化审查轨迹 JSON",
+    "FormatError": "解析器检测到动作格式错误（0 动作、>1 动作、tool+文本冲突等）",
+    "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT": "提交标记契约的触发字符串",
+    "yolo": "自动执行模式，跳过每步人工确认",
+    "confirm": "每步执行前人工确认模式"
+  },
+  "entities": [
+    {
+      "name": "Model",
+      "type": "外部依赖",
+      "necessity": "必须",
+      "description": "大语言模型，生成助手消息（含自然语言与 THOUGHT）"
+    },
+    {
+      "name": "Parser",
+      "type": "核心组件",
+      "necessity": "必须",
+      "description": "解析器，从助手输出中抽取恰好一个可执行动作"
+    },
+    {
+      "name": "Executor",
+      "type": "核心组件",
+      "necessity": "必须",
+      "description": "执行器，运行 Shell 命令"
+    },
+    {
+      "name": "Observer",
+      "type": "核心组件",
+      "necessity": "必须",
+      "description": "观测器，捕获执行结果"
+    },
+    {
+      "name": "Trajectory",
+      "type": "数据结构",
+      "necessity": "必须",
+      "description": "轨迹记录，完整对话历史与执行元数据"
+    },
+    {
+      "name": "Config",
+      "type": "核心组件",
+      "necessity": "必须",
+      "description": "配置系统（YAML + Jinja2，多源合并）"
+    },
+    {
+      "name": "CLI",
+      "type": "用户接触点",
+      "necessity": "必须",
+      "description": "命令行界面（单任务模式 + 批处理模式）"
+    },
+    {
+      "name": "Checker",
+      "type": "辅助工具",
+      "necessity": "可选",
+      "description": "Textual 检查器，可视化审查轨迹 JSON"
+    }
+  ],
+  "flows": [
+    {
+      "from": "Model",
+      "action": "生成",
+      "to": "Parser",
+      "data": "助手消息",
+      "trigger": "MODEL 状态"
+    },
+    {
+      "from": "Parser",
+      "action": "解析",
+      "to": "Executor",
+      "data": "命令字符串",
+      "trigger": "PARSE 状态，恰好一个动作"
+    },
+    {
+      "from": "Parser",
+      "action": "抛出",
+      "to": "Model",
+      "data": "FormatError",
+      "trigger": "PARSE 状态，0 或 >1 动作"
+    },
+    {
+      "from": "Executor",
+      "action": "执行",
+      "to": "Observer",
+      "data": "Shell 命令",
+      "trigger": "EXECUTE 状态"
+    },
+    {
+      "from": "Observer",
+      "action": "捕获",
+      "to": "Trajectory",
+      "data": "执行结果",
+      "trigger": "OBSERVE 状态"
+    },
+    {
+      "from": "Trajectory",
+      "action": "追加",
+      "to": "Model",
+      "data": "消息历史",
+      "trigger": "OBSERVE 状态完成"
+    }
+  ],
+  "missing_components": [],
+  "clarifications": []
+}
