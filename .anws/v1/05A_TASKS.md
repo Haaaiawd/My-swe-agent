@@ -84,7 +84,7 @@ graph TD
   - **依赖**: 无
   - **优先级**: P0
 
-- [ ] **T1.1.2** [REQ-007]: 实现 ConfigLoader
+- [x] **T1.1.2** [REQ-007]: 实现 ConfigLoader
   - **描述**: 实现配置加载器，支持 YAML 文件（DebugUndefined 渲染后 safe_load）、环境变量（前缀转嵌套 dict）、默认值三源加载
   - **输入**: `04_SYSTEM_DESIGN/config.md §5 操作契约`、`config.detail.md §2.2 ConfigLoader`、`ADR_004_CONFIG_MANAGEMENT.md §配置源`
   - **输出**: `src/config/loader.py`（`ConfigLoader` 类）
@@ -108,7 +108,7 @@ graph TD
   - **依赖**: T1.1.1
   - **优先级**: P0
 
-- [ ] **T1.1.3** [REQ-007]: 实现 ConfigMerger
+- [x] **T1.1.3** [REQ-007]: 实现 ConfigMerger
   - **描述**: 实现配置递归合并器，策略为 dict→递归合并，其余类型（含 list）→ override 覆盖 base，体现 CLI > 文件 > env > 默认值优先级
   - **输入**: `04_SYSTEM_DESIGN/config.md §5 操作契约`、`config.detail.md §2.3 ConfigMerger`、`ADR_004_CONFIG_MANAGEMENT.md §配置优先级`
   - **输出**: `src/config/merger.py`（`ConfigMerger` 类）
@@ -132,7 +132,7 @@ graph TD
   - **依赖**: T1.1.1
   - **优先级**: P0
 
-- [ ] **T1.1.4** [REQ-007]: 实现 TemplateRenderer（含观测截断）
+- [x] **T1.1.4** [REQ-007]: 实现 TemplateRenderer（含观测截断）
   - **描述**: 实现 Jinja2 模板渲染器（StrictUndefined 模式，模板缓存）和观测截断逻辑（>= 10000 字符时截断为前5000+后5000，记录 elided_chars）
   - **输入**: `04_SYSTEM_DESIGN/config.md §5 操作契约`、`config.detail.md §2.4 TemplateRenderer`、`ADR_004_CONFIG_MANAGEMENT.md §观测模板截断`
   - **输出**: `src/config/renderer.py`（`TemplateRenderer` 类）
