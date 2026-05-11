@@ -62,12 +62,14 @@ class TestTruncate:
         result = renderer.truncate(output)
         assert result == output
 
-    def test_at_threshold_no_truncation(self):
+    def test_at_threshold_truncation(self, caplog):
+        """ADR-004: output length >= 10000 triggers truncation."""
         env = jinja2.Environment(undefined=jinja2.StrictUndefined)
         renderer = TemplateRenderer(env)
         output = "x" * 10000
         result = renderer.truncate(output)
-        assert result == output
+        assert len(result) == TRUNCATE_PREFIX_LENGTH + TRUNCATE_SUFFIX_LENGTH
+        assert "elided 0 chars" in caplog.text
 
     def test_above_threshold_truncation(self, caplog):
         env = jinja2.Environment(undefined=jinja2.StrictUndefined)

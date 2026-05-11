@@ -66,7 +66,7 @@ def observe_result(
         lines = cleaned.splitlines()
         if lines and lines[0] == SUBMISSION_MARKER:
             submitted = True
-            submission_text = "\n".join(lines[1:]) if len(lines) > 1 else ""
+            submission_text = "\n".join(lines[1:]) if len(lines) > 1 else None
 
     # Observation template rendering (with fallback per CH-R3-06)
     if template_renderer is not None:

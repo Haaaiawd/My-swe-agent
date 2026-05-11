@@ -82,7 +82,7 @@ class TemplateRenderer:
         """
         if max_length <= 0:
             raise ValueError(f"max_length must be positive, got {max_length}")
-        if len(output) <= max_length:
+        if len(output) < max_length:
             return output
 
         elided = len(output) - max_length

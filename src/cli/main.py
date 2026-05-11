@@ -1,16 +1,92 @@
 """CLI main entry-point using click.
 
-Registers run, batch, and check subcommands (placeholders for S3).
+Registers run, batch, and check subcommands.
 Risk warning included in --help output per ADR-001.
 
-Core logic: click group with three subcommands and --version.
-Dependencies: click.
-Test coverage: INT-S1 smoke test (mini-swe-agent --help).
+Core logic:
+  - click group with three subcommands and --version.
+  - run: loads config via ConfigManager, runs Agent, maps returncode to CLI exit code.
+  - batch / check: placeholders (T3.1.3 / T3.1.4).
+
+Dependencies: click, pathlib, json, datetime.
+Test coverage: tests/integration/test_cli_run.py, tests/unit/test_exit_codes.py.
 """
 
 from __future__ import annotations
 
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
 import click
+
+from cli.exit_codes import EXIT_CODES, map_agent_result_to_exit_code
+from config import ConfigError, ConfigManager
+from core.agent import Agent
+
+# ── Risk banner ───────────────────────────────────────────────
+
+_RISK_BANNER = """\
+⚠️  Warning: This tool executes shell commands automatically.
+    Review the task description and configuration before running.
+    Use --yolo with caution.
+"""
+
+
+def _print_risk_banner() -> None:
+    """Print the risk warning banner to stderr."""
+    click.echo(_RISK_BANNER, err=True)
+
+
+def _confirm_continue() -> bool:
+    """Prompt the user to confirm continuation; return True if confirmed."""
+    try:
+        return click.confirm("Continue?", default=False)
+    except click.Abort:
+        return False
+
+
+# ── Diagnostic helper ─────────────────────────────────────────
+
+_DIAGNOSTIC_FILENAME_TEMPLATE = "diagnostic_{timestamp}.json"
+
+
+def _write_diagnostic_file(output_dir: Path, exc: ConfigError) -> Path:
+    """Write a minimal diagnostic JSON when ConfigError occurs.
+
+    Returns the path to the written file.
+    """
+    output_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    filename = _DIAGNOSTIC_FILENAME_TEMPLATE.format(timestamp=timestamp)
+    diag_path = output_dir / filename
+    diagnostic = {
+        "error_type": "ConfigError",
+        "message": exc.message,
+        "file_path": exc.file_path,
+        "line": exc.line,
+        "variable": exc.variable,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    diag_path.write_text(json.dumps(diagnostic, indent=2), encoding="utf-8")
+    return diag_path
+
+
+# ── Summary helper ────────────────────────────────────────────
+
+
+def _print_summary(result: Any) -> None:
+    """Print a human-readable summary of the agent run result."""
+    click.echo(f"Final state : {result.final_state}")
+    click.echo(f"Return code : {result.returncode}")
+    click.echo(f"Trajectory  : {result.trajectory_path}")
+    if result.overall_output:
+        click.echo(f"Output len  : {len(result.overall_output)} chars")
+
+
+# ── CLI group ─────────────────────────────────────────────────
 
 
 @click.group(
@@ -25,10 +101,108 @@ def cli() -> None:
     pass
 
 
+# ── run subcommand ────────────────────────────────────────────
+
+
 @cli.command(name="run", help="Run a single task.")
-def run_cmd() -> None:
-    """Placeholder for the run subcommand (T3.1.2)."""
-    click.echo("run: not yet implemented (T3.1.2)")
+@click.option(
+    "--config",
+    "-c",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    help="Path to the YAML configuration file.",
+)
+@click.option("--model", "-m", type=str, default=None, help="Override model name.")
+@click.option(
+    "--yolo",
+    is_flag=True,
+    default=False,
+    help="Skip confirmation prompt and run immediately.",
+)
+@click.option(
+    "--step-limit",
+    type=int,
+    default=None,
+    help="Override the agent step limit.",
+)
+@click.option(
+    "--cost-limit",
+    type=float,
+    default=None,
+    help="Override the agent cost limit (USD).",
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=Path("./outputs"),
+    help="Directory for trajectory and diagnostic files.",
+)
+@click.option("--verbose", "-v", is_flag=True, default=False, help="Print summary after run.")
+def run_cmd(
+    config: Path,
+    model: str | None,
+    yolo: bool,
+    step_limit: int | None,
+    cost_limit: float | None,
+    output: Path,
+    verbose: bool,
+) -> None:
+    """Run a single task through the agent loop.
+
+    Loads configuration, optionally overrides model/step/cost limits,
+    executes the agent, and maps the final returncode to a CLI exit code.
+    """
+    _print_risk_banner()
+    if not yolo and not _confirm_continue():
+        sys.exit(EXIT_CODES["USER_DECLINED"])
+
+    # Load configuration
+    mgr = ConfigManager()
+    try:
+        cfg = mgr.load_config(config_paths=[str(config)], env_prefix="MINI_SWE")
+    except ConfigError as exc:
+        click.echo(f"Configuration error: {exc.message}", err=True)
+        diag_path = _write_diagnostic_file(output, exc)
+        click.echo(f"Diagnostic written to: {diag_path}", err=True)
+        sys.exit(EXIT_CODES["AGENT_FATAL_CONFIG"])
+
+    # Apply CLI overrides
+    if model is not None:
+        if isinstance(cfg.get("model"), dict):
+            cfg["model"]["name"] = model
+        else:
+            cfg["model"] = {"name": model}
+
+    if step_limit is not None:
+        if "agent" not in cfg or not isinstance(cfg["agent"], dict):
+            cfg["agent"] = {}
+        cfg["agent"]["step_limit"] = step_limit
+
+    if cost_limit is not None:
+        if "agent" not in cfg or not isinstance(cfg["agent"], dict):
+            cfg["agent"] = {}
+        cfg["agent"]["cost_limit"] = cost_limit
+
+    # Ensure output directory exists and set trajectory path
+    output.mkdir(parents=True, exist_ok=True)
+    if "output" not in cfg or not isinstance(cfg["output"], dict):
+        cfg["output"] = {}
+    cfg["output"]["trajectory_path"] = str(output / "trajectory.jsonl")
+
+    # Run agent
+    agent = Agent(cfg)
+    task_description = cfg.get("task_description", "")
+    result = agent.run(task_description)
+
+    if verbose:
+        _print_summary(result)
+
+    cli_exit = map_agent_result_to_exit_code(result.returncode)
+    sys.exit(cli_exit)
+
+
+# ── batch subcommand (placeholder) ────────────────────────────
 
 
 @cli.command(name="batch", help="Batch process multiple tasks.")
@@ -37,10 +211,16 @@ def batch_cmd() -> None:
     click.echo("batch: not yet implemented (T3.1.3)")
 
 
+# ── check subcommand (placeholder) ────────────────────────────
+
+
 @cli.command(name="check", help="Inspect a trajectory file (TUI).")
 def check_cmd() -> None:
     """Placeholder for the check subcommand (T3.1.4)."""
     click.echo("check: not yet implemented (T3.1.4)")
+
+
+# ── Entry-point ─────────────────────────────────────────────
 
 
 def main() -> None:

@@ -125,7 +125,7 @@ class StateMachine:
         cost_limit = agent_cfg.get("cost_limit", 2.0)
         cost_estimate = agent_cfg.get("cost_estimate_per_call", 0.05)
         timeout = cfg.get("executor", {}).get("timeout", 120)
-        protocol = model_cfg.get("protocol", "tool_call")
+        protocol = model_cfg.get("protocol", "tool-call")
 
         if state == State.MODEL:
             # Preventive cost check (CH-R3-09)

@@ -17,7 +17,7 @@ class TestLoadYamlFile:
         yaml_path = tmp_path / "test.yaml"
         yaml_path.write_text('model:\n  name: "{{ model_name }}"\n', encoding="utf-8")
 
-        result = loader.load_yaml_file(str(yaml_path), renderer=None)
+        result = loader.load_yaml_file(str(yaml_path))
         assert result == {"model": {"name": "{{ model_name }}"}}
 
     def test_valid_yaml_no_jinja(self, tmp_path):
@@ -25,13 +25,13 @@ class TestLoadYamlFile:
         yaml_path = tmp_path / "test.yaml"
         yaml_path.write_text("executor:\n  timeout: 60\n", encoding="utf-8")
 
-        result = loader.load_yaml_file(str(yaml_path), renderer=None)
+        result = loader.load_yaml_file(str(yaml_path))
         assert result == {"executor": {"timeout": 60}}
 
     def test_missing_file(self):
         loader = ConfigLoader()
         with pytest.raises(FileNotFoundError):
-            loader.load_yaml_file("/nonexistent/path.yaml", renderer=None)
+            loader.load_yaml_file("/nonexistent/path.yaml")
 
     def test_yaml_syntax_error(self, tmp_path):
         loader = ConfigLoader()
@@ -39,7 +39,7 @@ class TestLoadYamlFile:
         yaml_path.write_text("executor: timeout: 60\n", encoding="utf-8")
 
         with pytest.raises(ConfigError) as exc_info:
-            loader.load_yaml_file(str(yaml_path), renderer=None)
+            loader.load_yaml_file(str(yaml_path))
         assert "YAML syntax error" in str(exc_info.value)
 
     def test_jinja2_undefined_variable(self, tmp_path):
@@ -50,7 +50,7 @@ class TestLoadYamlFile:
         # DebugUndefined does not raise during render, but yaml.safe_load
         # fails on the unresolvable placeholder -> wrapped as ConfigError.
         with pytest.raises(ConfigError) as exc_info:
-            loader.load_yaml_file(str(yaml_path), renderer=None)
+            loader.load_yaml_file(str(yaml_path))
         assert "YAML syntax error" in str(exc_info.value)
 
     def test_empty_file(self, tmp_path):
@@ -58,7 +58,7 @@ class TestLoadYamlFile:
         yaml_path = tmp_path / "empty.yaml"
         yaml_path.write_text("", encoding="utf-8")
 
-        result = loader.load_yaml_file(str(yaml_path), renderer=None)
+        result = loader.load_yaml_file(str(yaml_path))
         assert result == {}
 
 

@@ -108,7 +108,7 @@ class ModelResponse:
 class Trajectory:
     """Execution trajectory record (schema v1_jsonl)."""
 
-    schema_version: str = "v1_jsonl"
+    schema_version: str = "v1"
     messages: list[dict[str, Any]] = field(default_factory=list)
     cost_accumulator: float = 0.0
     step_counter: int = 0

@@ -12,6 +12,7 @@ Test coverage: tests/unit/test_validator.py.
 
 from __future__ import annotations
 
+import os
 import re
 import shlex
 
@@ -53,7 +54,7 @@ def validate_command(command: str) -> None:
             )
 
     # 2. Destructive command + dangerous flag combination
-    parts = shlex.split(command)
+    parts = shlex.split(command, posix=os.name != "nt")
     if parts:
         cmd_base = parts[0].lower()
         if cmd_base in DESTRUCTIVE_COMMANDS:

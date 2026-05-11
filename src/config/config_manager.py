@@ -43,7 +43,6 @@ class ConfigManager:
         self._merger = ConfigMerger()
         self._renderer = TemplateRenderer(self.jinja_env)
         self._config_cache: dict[str, Any] = {}
-        self._template_cache: dict[str, jinja2.Template] = {}
 
     # ── Redaction ───────────────────────────────────────────────
 
@@ -95,7 +94,7 @@ class ConfigManager:
 
         # Step 3: configuration files (later files win)
         for path in config_paths or []:
-            file_config = self._loader.load_yaml_file(path, self._renderer)
+            file_config = self._loader.load_yaml_file(path)
             config = self._merger.deep_merge(config, file_config)
 
         # Step 4: CLI args (highest priority)
@@ -125,7 +124,3 @@ class ConfigManager:
         """Clear the configuration and template caches."""
         self._config_cache.clear()
         self._renderer._template_cache.clear()
-
-    def _load_defaults(self) -> dict[str, Any]:
-        """Return the hard-coded default configuration."""
-        return self._loader.load_defaults()

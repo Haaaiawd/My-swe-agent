@@ -35,7 +35,7 @@ class TestTrajectoryManager:
         saved = mgr.save_trajectory(str(path))
         assert saved == path
         data = json.loads(path.read_text(encoding="utf-8"))
-        assert data["schema_version"] == "v1_jsonl"
+        assert data["schema_version"] == "v1"
         assert "messages" in data
         assert data["messages"][0]["tool_call_id"] == "tc_1"
 
@@ -64,4 +64,4 @@ class TestTrajectoryManager:
         saved = mgr.save_trajectory(str(bad_path))
         assert "trajectory_backup_" in str(saved)
         data = json.loads(saved.read_text(encoding="utf-8"))
-        assert data["schema_version"] == "v1_jsonl"
+        assert data["schema_version"] == "v1"

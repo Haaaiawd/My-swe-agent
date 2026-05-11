@@ -53,13 +53,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
 class ConfigLoader:
     """Load configuration from files, environment variables, and defaults."""
 
-    def load_yaml_file(self, path: str, renderer: Any) -> dict[str, Any]:
+    def load_yaml_file(self, path: str) -> dict[str, Any]:
         """Read a YAML file: Jinja2 render (DebugUndefined) then yaml.safe_load.
 
         Args:
             path: Absolute or relative path to the YAML file.
-            renderer: TemplateRenderer instance (reserved for future use;
-                      YAML file rendering uses an independent DebugUndefined env).
 
         Returns:
             Parsed configuration dictionary.
@@ -83,12 +81,6 @@ class ConfigLoader:
                 f"Jinja2 syntax error in {path}: {e}",
                 file_path=path,
                 line=e.lineno,
-            ) from e
-        except jinja2.UndefinedError as e:
-            logger.warning(f"Undefined variable in {path}: {e}")
-            raise ConfigError(
-                f"Undefined variable in {path}: {str(e)[:200]}",
-                file_path=path,
             ) from e
 
         # Step 2: YAML parse
