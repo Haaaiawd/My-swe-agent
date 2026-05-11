@@ -118,7 +118,7 @@ T2.2.4, T2.2.5, T2.2.6
 T2.3.1
 签名: AUTO
 
-### 🌊 Wave 9 — Sprint 2: INT-S2 S2 集成验证
+### 🌊 Wave 9 ✅ — Sprint 2: INT-S2 S2 集成验证
 INT-S2
 签名: AUTO
 

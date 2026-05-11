@@ -402,7 +402,7 @@ graph TD
   - **依赖**: T2.2.1, T2.2.2, T2.2.3, T2.2.4, T2.2.5, T2.2.6
   - **优先级**: P0
 
-- [ ] **INT-S2** [MILESTONE]: S2 集成验证 — Core Engine
+- [x] **INT-S2** [MILESTONE]: S2 集成验证 — Core Engine
   - **描述**: 验证 Core Agent System 完整集成，状态机闭环在本机可运行
   - **输入**: S2 所有任务产出（T2.1.1～T2.3.1）
   - **输出**: 集成验证报告（通过/失败 + Bug 清单）
