@@ -375,7 +375,7 @@ graph TD
 
 ### Phase 3: Integration（状态机集成）
 
-- [ ] **T2.3.1** [REQ-001]: 实现 StateMachine（核心状态机主循环）
+- [x] **T2.3.1** [REQ-001]: 实现 StateMachine（核心状态机主循环）
   - **描述**: 实现核心状态机主循环（MODEL→PARSE→VALIDATE→EXECUTE→OBSERVE），集成所有内部组件；处理 `consecutive_format_errors` 防循环（默认阈值 5，连续 FormatError 进入 UNKNOWN_ERROR）；6 种终态处理（SUBMITTED/LIMIT_STEP/LIMIT_COST/INTERRUPT/FATAL_CONFIG/UNKNOWN_ERROR），每个终态前调用 `save_trajectory`；SIGINT/SIGTERM 信号捕获后进入 INTERRUPT；返回结构化 `AgentResult`（final_state + returncode 映射）
   - **输入**: `core-agent.detail.md §3 主循环算法`、`core-agent.detail.md §4 决策树`、`ADR_003_ERROR_HANDLING.md §FormatError防循环`、`T2.1.1 产出的 models.py`、`T2.2.1~T2.2.6 所有内部组件产出`
   - **输出**: `src/core/agent.py`（`Agent` 类，`run()` 方法返回 `AgentResult`），`src/core/state_machine.py`

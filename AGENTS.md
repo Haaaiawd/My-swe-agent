@@ -106,8 +106,20 @@ INT-S1
 T2.1.1
 签名: AUTO
 
-### 🌊 Wave 6 — Sprint 2: Core 内部组件（Phase 2 上篇）
+### 🌊 Wave 6 ✅ — Sprint 2: Core 内部组件（Phase 2 上篇）
 T2.2.1, T2.2.2, T2.2.3
+签名: AUTO
+
+### 🌊 Wave 7 ✅ — Sprint 2: Core 内部组件（Phase 2 下篇）
+T2.2.4, T2.2.5, T2.2.6
+签名: AUTO
+
+### 🌊 Wave 8 ✅ — Sprint 2: StateMachine
+T2.3.1
+签名: AUTO
+
+### 🌊 Wave 9 — Sprint 2: INT-S2 S2 集成验证
+INT-S2
 签名: AUTO
 
 
