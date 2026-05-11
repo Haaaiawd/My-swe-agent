@@ -217,7 +217,7 @@ graph TD
 
 ### Phase 2: Core（内部组件）
 
-- [ ] **T2.2.1** [REQ-002]: 实现 Parser（动作解析器）
+- [x] **T2.2.1** [REQ-002]: 实现 Parser（动作解析器）
   - **描述**: 实现 `parse_action(message, protocol)` 严格动作解析，支持 tool-call 模式（恰好 1 个 bash tool_call）和文本模式（恰好 1 个围栏块/XML块），0或>1动作、两族同时命中、空命令均抛 FormatError；实现 FormatError 防循环计数器逻辑
   - **输入**: `core-agent.detail.md §3.1 parse_action 算法`、`ADR_005_ACTION_PARSING_PROTOCOL.md`、`T2.1.1 产出的 models.py`
   - **输出**: `src/core/parser.py`（`parse_action` 函数，`extract_fence_blocks`，`extract_xml_blocks`）
@@ -247,7 +247,7 @@ graph TD
   - **依赖**: T2.1.1
   - **优先级**: P0
 
-- [ ] **T2.2.2** [REQ-003]: 实现 Executor（命令执行器）
+- [x] **T2.2.2** [REQ-003]: 实现 Executor（命令执行器）
   - **描述**: 实现 `execute_command(command, timeout)` 使用 `shlex.split(posix=not is_windows) + shell=False` 执行 Shell 命令，捕获 returncode/stdout/stderr/stdout_original，超时（TimeoutExpired）直接终止并记录 `error_type="TIMEOUT"`，不重试
   - **输入**: `core-agent.detail.md §3.2 execute_command 算法`、`ADR_001_TECH_STACK.md §Windows兼容性`、`ADR_003_ERROR_HANDLING.md §执行超时`、`T2.1.1 产出的 models.py`
   - **输出**: `src/core/executor.py`（`execute_command` 函数）
@@ -271,7 +271,7 @@ graph TD
   - **依赖**: T2.1.1
   - **优先级**: P0
 
-- [ ] **T2.2.3** [REQ-003]: 实现 CommandValidator（命令安全校验）
+- [x] **T2.2.3** [REQ-003]: 实现 CommandValidator（命令安全校验）
   - **描述**: 实现 PARSE 后、EXECUTE 前的 VALIDATE 子步骤：黑名单正则（`rm -rf /`、`dd if=/dev/zero`、`mkfs`、`format`）、危险标志组合（`-f`/`--force` + 破坏性命令）、可选白名单模式；校验失败抛 `CommandValidationError`，记录拒绝原因，不重试
   - **输入**: `ADR_003_ERROR_HANDLING.md §命令校验策略`、`core-agent.detail.md §1 FORBIDDEN_SHELL_CHARS`、`T2.1.1 产出的 models.py`
   - **输出**: `src/core/validator.py`（`validate_command` 函数）
