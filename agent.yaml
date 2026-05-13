@@ -25,7 +25,7 @@ task_description: |
   ```
 
 model:
-  name: "openrouter/inclusionai/ring-2.6-1t:free"
+  name: "openrouter/nvidia/nemotron-3-super-120b-a12b:free"
   protocol: "text"
   api_key: "${MINI_SWE_MODEL__API_KEY}"
   stream: true
