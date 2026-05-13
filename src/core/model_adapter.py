@@ -65,16 +65,17 @@ def _inject_system_prompt(
     messages: list[dict[str, Any]],
     system_prompt: str | None,
 ) -> list[dict[str, Any]]:
-    """Merge system prompt into the first user message.
+    """Inject system prompt as a standalone system message AND into first user.
 
-    Many free-tier models ignore or mishandle standalone ``role="system"``
-    messages.  To guarantee the agent instructions are seen, we prepend the
-    prompt text directly to the content of the first user message.
+    We do both: prepend a ``role="system"`` message (works for most providers)
+    AND merge into the first user message (fallback for models that ignore
+    standalone system messages).  This maximises the chance the instructions
+    are actually seen.
     """
     if not system_prompt:
         return messages
-    # Find first user message and prepend system prompt
-    result = []
+
+    result: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
     injected = False
     for msg in messages:
         if not injected and msg.get("role") == "user":
@@ -157,6 +158,14 @@ def call_model(
     # Inject system prompt
     system_prompt = model_cfg.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
     messages = _inject_system_prompt(messages, system_prompt)
+
+    # Debug: log what we're about to send (visible at INFO level for e2e)
+    logger.info("[call_model] sending %d messages -> %s", len(messages), model_cfg.get("name"))
+    for i, m in enumerate(messages):
+        role = m.get("role", "?")
+        content = str(m.get("content", ""))
+        preview = content[:120].replace("\n", " ")
+        logger.info("  msg[%d] %s: %s...", i, role, preview)
 
     # Streaming path
     if stream:
