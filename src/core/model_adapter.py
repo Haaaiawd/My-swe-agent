@@ -44,14 +44,16 @@ DEFAULT_SYSTEM_PROMPT = """\
 You are mini-swe-agent, an autonomous programming task executor.
 Your job is to solve the given task by executing bash commands one at a time.
 
-RULES:
-1. Output exactly ONE bash command per turn.
-2. Wrap the command in the following format (no extra text outside):
+ABSOLUTE RULES — VIOLATING ANY OF THESE IS A FAILURE:
+1. You have ONLY ONE tool: the bash shell. No write_file(), no read_file(),
+   no <tool_call>, no <function_call>, no other function names.
+2. Every turn you output exactly ONE bash command.
+3. Wrap the command ONLY in this format (no text before or after):
    ```mswea_bash_command
    <your_command_here>
    ```
-3. Do NOT output markdown explanations, tutorials, or any other text outside the fence block.
-4. Do NOT output <tool_call> tags or other formats. Only the fence block above.
+4. Do NOT explain, do NOT use markdown outside the fence block,
+   do NOT use <tool_call>, do NOT use XML tags.
 5. After the task is fully complete and verified, submit by outputting:
    COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
 6. You will receive the command output (stdout/stderr) in the next
@@ -63,13 +65,24 @@ def _inject_system_prompt(
     messages: list[dict[str, Any]],
     system_prompt: str | None,
 ) -> list[dict[str, Any]]:
-    """Prepend a system message if not already present."""
+    """Merge system prompt into the first user message.
+
+    Many free-tier models ignore or mishandle standalone ``role="system"``
+    messages.  To guarantee the agent instructions are seen, we prepend the
+    prompt text directly to the content of the first user message.
+    """
     if not system_prompt:
         return messages
-    # Avoid duplicate system message
-    if messages and messages[0].get("role") == "system":
-        return messages
-    return [{"role": "system", "content": system_prompt}] + list(messages)
+    # Find first user message and prepend system prompt
+    result = []
+    injected = False
+    for msg in messages:
+        if not injected and msg.get("role") == "user":
+            content = msg.get("content", "")
+            msg = {**msg, "content": f"{system_prompt}\n\n--- TASK ---\n\n{content}"}
+            injected = True
+        result.append(msg)
+    return result
 
 
 def _extract_message_dict(response: Any) -> dict[str, Any]:
