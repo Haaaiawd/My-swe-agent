@@ -52,7 +52,7 @@ def parse_action(message: dict[str, Any], protocol: str) -> str:
     Raises:
         FormatError: If the response does not contain *exactly one* valid action.
     """
-    tool_calls = message.get("tool_calls", [])
+    tool_calls = message.get("tool_calls") or []
     content = message.get("content", "")
 
     # Unified text-block extraction (performed up-front so we can detect

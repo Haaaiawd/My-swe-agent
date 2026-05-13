@@ -144,6 +144,11 @@ class StateMachine:
         protocol = model_cfg.get("protocol", "tool-call")
 
         if state == State.MODEL:
+            # Step limit check
+            if traj_mgr.trajectory.step_counter >= step_limit:
+                logger.warning("Step limit reached (%s), entering LIMIT_STEP", step_limit)
+                return State.LIMIT_STEP
+
             # Preventive cost check (CH-R3-09)
             if traj_mgr.trajectory.cost_accumulator + cost_estimate > cost_limit:
                 return State.LIMIT_COST
