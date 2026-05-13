@@ -24,7 +24,7 @@ mini-swe-agent run --config agent.yaml --yolo
 mini-swe-agent batch ./dataset --config agent.yaml --workers 4 --output preds.json
 
 # Inspect a trajectory file (Textual TUI)
-mini-swe-agent check outputs/trajectory.jsonl
+mini-swe-agent check outputs/trajectory.json
 ```
 
 ## Configuration Priority
@@ -53,7 +53,7 @@ See `ADR-004` for full configuration management details.
 | 21 | User declined to continue (yolo=False) |
 | 130 | Interrupted by SIGINT |
 
-Core Agent internal returncodes (mapped to CLI codes above):
+Agent internal returncodes (mapped to CLI codes above):
 | Core Returncode | State |
 |-----------------|-------|
 | 0 | SUBMITTED |

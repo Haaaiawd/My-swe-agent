@@ -27,7 +27,7 @@ def test_format_error_threshold_reaches_unknown_error(tmp_path: Path) -> None:
             "cost_estimate_per_call": 0.01,
             "max_consecutive_format_errors": 3,
         },
-        "output": {"trajectory_path": str(tmp_path / "traj.jsonl")},
+        "output": {"trajectory_path": str(tmp_path / "traj.json")},
     }
 
     call_count = 0

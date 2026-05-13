@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_CONFIG: dict[str, Any] = {
     "model": {
         "name": "gpt-4o",
-        "protocol": "tool_call",
+        "protocol": "tool-call",
         "api_key": None,
         "max_retries": 5,
         "cost_missing_strategy": "warn",

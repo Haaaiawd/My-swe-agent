@@ -109,9 +109,11 @@ def cli() -> None:
 @click.option(
     "--config",
     "-c",
+    "config_paths",
     required=True,
+    multiple=True,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="Path to the YAML configuration file.",
+    help="Path(s) to YAML configuration file(s). Can be specified multiple times.",
 )
 @click.option("--model", "-m", type=str, default=None, help="Override model name.")
 @click.option(
@@ -140,14 +142,23 @@ def cli() -> None:
     help="Directory for trajectory and diagnostic files.",
 )
 @click.option("--verbose", "-v", is_flag=True, default=False, help="Print summary after run.")
+@click.option("--task", type=str, default=None, help="Override task description.")
+@click.option(
+    "--exit-immediately",
+    is_flag=True,
+    default=None,
+    help="Override agent exit_immediately flag.",
+)
 def run_cmd(
-    config: Path,
+    config_paths: tuple[Path, ...],
     model: str | None,
     yolo: bool,
     step_limit: int | None,
     cost_limit: float | None,
     output: Path,
     verbose: bool,
+    task: str | None,
+    exit_immediately: bool | None,
 ) -> None:
     """Run a single task through the agent loop.
 
@@ -161,7 +172,7 @@ def run_cmd(
     # Load configuration
     mgr = ConfigManager()
     try:
-        cfg = mgr.load_config(config_paths=[str(config)], env_prefix="MINI_SWE")
+        cfg = mgr.load_config(config_paths=[str(c) for c in config_paths], env_prefix="MINI_SWE")
     except ConfigError as exc:
         click.echo(f"Configuration error: {exc.message}", err=True)
         diag_path = _write_diagnostic_file(output, exc)
@@ -185,16 +196,31 @@ def run_cmd(
             cfg["agent"] = {}
         cfg["agent"]["cost_limit"] = cost_limit
 
+    if task is not None:
+        cfg["task_description"] = task
+
+    if exit_immediately is not None:
+        if "agent" not in cfg or not isinstance(cfg["agent"], dict):
+            cfg["agent"] = {}
+        cfg["agent"]["exit_immediately"] = exit_immediately
+
     # Ensure output directory exists and set trajectory path
     output.mkdir(parents=True, exist_ok=True)
     if "output" not in cfg or not isinstance(cfg["output"], dict):
         cfg["output"] = {}
-    cfg["output"]["trajectory_path"] = str(output / "trajectory.jsonl")
+    cfg["output"]["trajectory_path"] = str(output / "trajectory.json")
 
     # Run agent
     agent = Agent(cfg)
     task_description = cfg.get("task_description", "")
-    result = agent.run(task_description)
+
+    def _confirm_step(command: str) -> bool:
+        return click.confirm(f"Execute: {command}?", default=False)
+
+    if yolo:
+        result = agent.run(task_description)
+    else:
+        result = agent.run(task_description, confirm_callback=_confirm_step)
 
     if verbose:
         _print_summary(result)

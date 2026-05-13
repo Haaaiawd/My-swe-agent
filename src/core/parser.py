@@ -104,5 +104,5 @@ def parse_action(message: dict[str, Any], protocol: str) -> str:
 
     raise FormatError(
         "Expected exactly 1 action block",
-        "no_tool_call",
+        "no_action",
     )

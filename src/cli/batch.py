@@ -133,7 +133,7 @@ def _should_run_instance(output_dir: Path, instance_id: str, redo_existing: bool
     """
     if redo_existing:
         return True
-    traj_path = output_dir / f"trajectory_{instance_id}.jsonl"
+    traj_path = output_dir / f"trajectory_{instance_id}.json"
     if not traj_path.exists():
         return True
     try:
@@ -154,8 +154,8 @@ def _compute_task_timeout(global_config_path: Path) -> float:
         cfg = {}
 
     agent_cfg = cfg.get("agent", {})
-    step_limit = agent_cfg.get("step_limit", 100)
-    step_timeout = agent_cfg.get("step_timeout", 120)
+    step_limit = agent_cfg.get("step_limit", 50)
+    step_timeout = cfg.get("executor", {}).get("timeout", 120)
     computed = step_limit * step_timeout + 30.0
 
     explicit = cfg.get("batch", {}).get("task_timeout")
@@ -177,7 +177,7 @@ def _run_single_instance(
     instance_id = instance.get("instance_id", "unknown")
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    traj_path = out_dir / f"trajectory_{instance_id}.jsonl"
+    traj_path = out_dir / f"trajectory_{instance_id}.json"
 
     mgr = ConfigManager()
     try:
@@ -285,8 +285,7 @@ def batch_run(batch_config: BatchConfig) -> int:
 
     # Build trajectory_path -> instance_id mapping for robust lookup
     traj_to_instance_id = {
-        batch_config.output_dir
-        / f"trajectory_{inst.get('instance_id', 'unknown')}.jsonl": inst.get(
+        batch_config.output_dir / f"trajectory_{inst.get('instance_id', 'unknown')}.json": inst.get(
             "instance_id", "unknown"
         )
         for inst in tasks_to_run
@@ -335,7 +334,7 @@ def _extract_instance_id(trajectory_path: Path) -> str:
     """Extract instance_id from trajectory file.
 
     First tries to read 'instance_id' from the trajectory JSON metadata,
-    then falls back to parsing the filename (trajectory_<id>.jsonl).
+    then falls back to parsing the filename (trajectory_<id>.json).
     """
     try:
         with open(trajectory_path, encoding="utf-8") as f:
@@ -356,7 +355,7 @@ def _write_preds_json(batch_result: BatchResult) -> None:
     batch_result.output_path.parent.mkdir(parents=True, exist_ok=True)
     data = {
         "schema_version": BATCH_SCHEMA_VERSION,
-        "predictions": [p.to_dict() for p in batch_result.preds],
+        "predictions": {p.instance_id: p.to_dict() for p in batch_result.preds},
     }
     with open(batch_result.output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)

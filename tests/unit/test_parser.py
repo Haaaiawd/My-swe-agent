@@ -92,7 +92,7 @@ class TestTextMode:
         msg = {"content": "just plain text"}
         with pytest.raises(FormatError) as exc:
             parse_action(msg, "text")
-        assert exc.value.error_type == "no_tool_call"
+        assert exc.value.error_type == "no_action"
 
     def test_empty_fence_block(self):
         msg = {"content": "```mswea_bash_command\n\n```"}

@@ -9,6 +9,7 @@ Dependencies: core.state_machine.StateMachine, core.models.AgentResult.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from core.models import AgentResult
@@ -21,7 +22,17 @@ class Agent:
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
 
-    def run(self, task: str) -> AgentResult:
-        """Run *task* and return the structured result."""
-        machine = StateMachine(self.config)
+    def run(
+        self,
+        task: str,
+        confirm_callback: Callable[[str], bool] | None = None,
+    ) -> AgentResult:
+        """Run *task* and return the structured result.
+
+        Args:
+            confirm_callback: Optional callable invoked per-step with the
+                parsed command string.  Should return ``True`` to proceed to
+                execution, ``False`` to interrupt.
+        """
+        machine = StateMachine(self.config, confirm_callback=confirm_callback)
         return machine.run(task)

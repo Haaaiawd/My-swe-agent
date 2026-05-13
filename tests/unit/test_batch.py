@@ -93,17 +93,17 @@ class TestShouldRunInstance:
         assert _should_run_instance(tmp_path, "inst_1", redo_existing=False) is True
 
     def test_existing_incomplete(self, tmp_path: Path) -> None:
-        traj = tmp_path / "trajectory_inst_1.jsonl"
+        traj = tmp_path / "trajectory_inst_1.json"
         traj.write_text(json.dumps({"messages": []}))
         assert _should_run_instance(tmp_path, "inst_1", redo_existing=False) is True
 
     def test_existing_complete(self, tmp_path: Path) -> None:
-        traj = tmp_path / "trajectory_inst_1.jsonl"
+        traj = tmp_path / "trajectory_inst_1.json"
         traj.write_text(json.dumps({"final_state": "SUBMITTED", "messages": []}))
         assert _should_run_instance(tmp_path, "inst_1", redo_existing=False) is False
 
     def test_redo_existing_true(self, tmp_path: Path) -> None:
-        traj = tmp_path / "trajectory_inst_1.jsonl"
+        traj = tmp_path / "trajectory_inst_1.json"
         traj.write_text(json.dumps({"final_state": "SUBMITTED", "messages": []}))
         assert _should_run_instance(tmp_path, "inst_1", redo_existing=True) is True
 

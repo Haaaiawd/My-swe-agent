@@ -48,7 +48,7 @@ class FakeAgent:
 
     def run(self, task: str) -> AgentResult:
         return AgentResult(
-            trajectory_path=Path("/tmp/traj.jsonl"),
+            trajectory_path=Path("/tmp/traj.json"),
             final_state="SUBMITTED",
             overall_output="done",
             returncode=0,
@@ -64,13 +64,15 @@ def test_run_normal_path(minimal_config: Path, tmp_path: Path, monkeypatch: Any)
         from cli.main import run_cmd
 
         run_cmd.callback(
-            config=minimal_config,
+            config_paths=(minimal_config,),
             model=None,
             yolo=True,
             step_limit=None,
             cost_limit=None,
             output=tmp_path / "outputs",
             verbose=False,
+            task=None,
+            exit_immediately=None,
         )
 
     assert exc_info.value.code == EXIT_CODES["SUCCESS"]
@@ -94,13 +96,15 @@ def test_run_config_error_writes_diagnostic(
 
         output_dir = tmp_path / "outputs"
         run_cmd.callback(
-            config=minimal_config,
+            config_paths=(minimal_config,),
             model=None,
             yolo=True,
             step_limit=None,
             cost_limit=None,
             output=output_dir,
             verbose=False,
+            task=None,
+            exit_immediately=None,
         )
 
     assert exc_info.value.code == EXIT_CODES["AGENT_FATAL_CONFIG"]
@@ -132,13 +136,15 @@ def test_run_model_override(minimal_config: Path, tmp_path: Path, monkeypatch: A
         from cli.main import run_cmd
 
         run_cmd.callback(
-            config=minimal_config,
+            config_paths=(minimal_config,),
             model="overridden-model",
             yolo=True,
             step_limit=None,
             cost_limit=None,
             output=tmp_path / "outputs",
             verbose=False,
+            task=None,
+            exit_immediately=None,
         )
 
     assert captured_config is not None
@@ -152,7 +158,7 @@ def test_run_exit_code_mapping(minimal_config: Path, tmp_path: Path, monkeypatch
     class LimitStepAgent(FakeAgent):
         def run(self, task: str) -> AgentResult:
             return AgentResult(
-                trajectory_path=Path("/tmp/traj.jsonl"),
+                trajectory_path=Path("/tmp/traj.json"),
                 final_state="LIMIT_STEP",
                 overall_output=None,
                 returncode=2,
@@ -165,13 +171,15 @@ def test_run_exit_code_mapping(minimal_config: Path, tmp_path: Path, monkeypatch
         from cli.main import run_cmd
 
         run_cmd.callback(
-            config=minimal_config,
+            config_paths=(minimal_config,),
             model=None,
             yolo=True,
             step_limit=None,
             cost_limit=None,
             output=tmp_path / "outputs",
             verbose=False,
+            task=None,
+            exit_immediately=None,
         )
 
     assert exc_info.value.code == EXIT_CODES["AGENT_LIMIT_STEP"]

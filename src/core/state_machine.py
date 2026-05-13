@@ -11,9 +11,13 @@ from __future__ import annotations
 
 import logging
 import signal
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import jinja2
+
+from config.renderer import DEFAULT_MAX_OBSERVATION_LENGTH, TemplateRenderer
 from core.executor import execute_command
 from core.model_adapter import call_model
 from core.models import (
@@ -52,9 +56,21 @@ EXITCODE_MAP: dict[State, int] = {
 class StateMachine:
     """Core agent state machine."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        config: dict[str, Any],
+        confirm_callback: Callable[[str], bool] | None = None,
+    ) -> None:
         self.config = config
+        self.confirm_callback = confirm_callback
         self._interrupted = False
+        self._obs_renderer = TemplateRenderer(
+            jinja2.Environment(
+                undefined=jinja2.StrictUndefined,
+                trim_blocks=True,
+                lstrip_blocks=True,
+            )
+        )
         self._setup_signal_handlers()
 
     # ── Signal handling ───────────────────────────────────────
@@ -98,7 +114,7 @@ class StateMachine:
         traj_path = self.config.get("output", {}).get("trajectory_path")
         if traj_path:
             try:
-                traj_mgr.save_trajectory(traj_path)
+                traj_mgr.save_trajectory(traj_path, final_state=state.value)
             except OSError:
                 logger.exception("Failed to save trajectory")
 
@@ -177,8 +193,17 @@ class StateMachine:
                 ctx.tool_call_id = None
                 return State.MODEL
 
-            # confirm_mode: if True, skip CONFIRM and go straight to EXECUTE for now
-            # (CONFIRM with real user input is not exercised by current test suite)
+            return State.CONFIRM
+
+        if state == State.CONFIRM:
+            confirm_mode = agent_cfg.get("confirm_mode", True)
+            if (
+                confirm_mode
+                and self.confirm_callback is not None
+                and not self.confirm_callback(ctx.command)
+            ):
+                logger.warning("User declined command execution")
+                return State.INTERRUPT
             return State.EXECUTE
 
         if state == State.EXECUTE:
@@ -186,7 +211,17 @@ class StateMachine:
             return State.OBSERVE
 
         if state == State.OBSERVE:
-            ctx.observation = observe_result(ctx.result, cfg)
+            ctx.observation = observe_result(ctx.result, cfg, template_renderer=self._obs_renderer)
+
+            # Enforce observation length cap
+            max_len = cfg.get("output", {}).get(
+                "observation_max_length", DEFAULT_MAX_OBSERVATION_LENGTH
+            )
+            if len(ctx.observation.content) > max_len:
+                ctx.observation.content = self._obs_renderer.truncate(
+                    ctx.observation.content, max_len
+                )
+
             traj_mgr.append(
                 {"role": "tool", "content": ctx.observation.content},
                 ctx.tool_call_id,

@@ -56,8 +56,8 @@ def test_write_preds_json_schema(tmp_path: Path) -> None:
     data = json.loads((tmp_path / "preds.json").read_text(encoding="utf-8"))
     assert "schema_version" in data
     assert "predictions" in data
-    assert len(data["predictions"]) == 1
-    pred = data["predictions"][0]
+    assert "django__1234" in data["predictions"]
+    pred = data["predictions"]["django__1234"]
     assert "instance_id" in pred
     assert "model_name_or_path" in pred
     assert "model_patch" in pred
@@ -87,7 +87,7 @@ def test_batch_run_smoke(tmp_path: Path, monkeypatch: Any) -> None:
 
         def run(self, task: str) -> AgentResult:
             return AgentResult(
-                trajectory_path=Path("/tmp/trajectory_test_1.jsonl"),
+                trajectory_path=Path("/tmp/trajectory_test_1.json"),
                 final_state="SUBMITTED",
                 overall_output="patch",
                 returncode=0,
@@ -133,5 +133,5 @@ def test_batch_run_smoke(tmp_path: Path, monkeypatch: Any) -> None:
 
     # Verify preds.json
     preds_data = json.loads((tmp_path / "preds.json").read_text(encoding="utf-8"))
-    assert len(preds_data["predictions"]) == 1
-    assert preds_data["predictions"][0]["instance_id"] == "test_1"
+    assert "test_1" in preds_data["predictions"]
+    assert preds_data["predictions"]["test_1"]["instance_id"] == "test_1"

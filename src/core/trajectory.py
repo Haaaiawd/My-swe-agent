@@ -60,10 +60,13 @@ class TrajectoryManager:
             for msg in self.trajectory.messages[-AUTO_FLUSH_EVERY:]:
                 f.write(json.dumps(msg, ensure_ascii=False) + "\n")
 
-    def save_trajectory(self, path: str | Path) -> Path:
+    def save_trajectory(self, path: str | Path, final_state: str | None = None) -> Path:
         """Persist the trajectory as a single JSON object to *path*.
 
         If *path* is unwritable, attempts a backup under the system temp dir.
+
+        Args:
+            final_state: Optional terminal state to record in the trajectory metadata.
 
         Returns:
             The final Path where the trajectory was written.
@@ -74,6 +77,7 @@ class TrajectoryManager:
             "messages": self.trajectory.messages,
             "cost_accumulator": self.trajectory.cost_accumulator,
             "step_counter": self.trajectory.step_counter,
+            "final_state": final_state,
         }
 
         try:
