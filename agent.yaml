@@ -1,0 +1,22 @@
+task_description: |
+  Write a hello world program in Python.
+  You must output exactly ONE bash command wrapped in the following format:
+  ```mswea_bash_command
+  echo "Hello, World!" > hello.py
+  ```
+  Do not output markdown, explanations, or code blocks in any other format.
+
+model:
+  name: "openrouter/inclusionai/ring-2.6-1t:free"
+  protocol: "text"
+  api_key: "${MINI_SWE_MODEL__API_KEY}"
+  extra_params:
+    api_base: "https://openrouter.ai/api/v1"
+
+agent:
+  step_limit: 30
+  cost_limit: 0.1
+  confirm_mode: false
+
+output:
+  trajectory_path: "./outputs/trajectory.json"
