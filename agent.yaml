@@ -28,6 +28,7 @@ model:
   name: "openrouter/inclusionai/ring-2.6-1t:free"
   protocol: "text"
   api_key: "${MINI_SWE_MODEL__API_KEY}"
+  stream: true
   extra_params:
     api_base: "https://openrouter.ai/api/v1"
 
