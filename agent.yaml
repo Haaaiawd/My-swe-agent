@@ -1,10 +1,28 @@
 task_description: |
-  Write a hello world program in Python.
-  You must output exactly ONE bash command wrapped in the following format:
+  Create a complete interactive HTML dashboard in the current directory.
+  Generate multiple .html files, each demonstrating a different frontend mini-feature:
+
+  1. index.html - Main dashboard with navigation links to all other pages
+  2. todo.html - A working todo list (add items, toggle complete, delete)
+  3. clock.html - A live digital/analog clock showing current time
+  4. calculator.html - A functional basic calculator (+-*/)
+  5. canvas.html - A simple drawing/sketch pad with color picker
+  6. chart.html - A bar chart rendered with vanilla JS + SVG or Canvas
+
+  Requirements:
+  - Each page must be standalone (no external dependencies, all CSS/JS inline)
+  - All features must actually work (not just visual placeholders)
+  - Use modern CSS (flexbox/grid, transitions, dark theme)
+  - The dashboard must look polished and cohesive across all pages
+
+  When everything is complete and verified, submit by outputting:
+  COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+  Followed by a summary of what you built.
+
+  You must output exactly ONE bash command per step wrapped in:
   ```mswea_bash_command
-  echo "Hello, World!" > hello.py
+  <command here>
   ```
-  Do not output markdown, explanations, or code blocks in any other format.
 
 model:
   name: "openrouter/inclusionai/ring-2.6-1t:free"
