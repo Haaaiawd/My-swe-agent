@@ -120,8 +120,10 @@ class Trajectory:
     ) -> None:
         """Append a message to the trajectory, optionally tagging *tool_call_id*."""
         msg = dict(message)
-        if tool_call_id is not None:
-            msg["tool_call_id"] = tool_call_id
+        # Some providers (e.g. Poolside) require tool_call_id on every tool
+        # message; always set it, using empty string as fallback.
+        if msg.get("role") == "tool" or tool_call_id is not None:
+            msg["tool_call_id"] = tool_call_id or ""
         msg["timestamp"] = datetime.now(timezone.utc).isoformat()
         self.messages.append(msg)
 
