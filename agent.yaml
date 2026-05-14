@@ -10,7 +10,7 @@ task_description: |
   COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
 
 model:
-  name: "openrouter/inclusionai/ring-2.6-1t:free"
+  name: "openrouter/poolside/laguna-m.1:free"
   protocol: "text"
   api_key: "${MINI_SWE_MODEL__API_KEY}"
   stream: true

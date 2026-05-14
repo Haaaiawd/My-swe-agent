@@ -84,7 +84,14 @@ def observe_result(
             logger.warning("Observation template render failed: %s. Falling back to raw output.", e)
             content = execution_result.stdout_original or execution_result.stdout or ""
     else:
-        content = execution_result.stdout_original or execution_result.stdout or ""
+        # Always include returncode; include stderr when present
+        parts: list[str] = []
+        if execution_result.stdout:
+            parts.append(execution_result.stdout)
+        if execution_result.stderr:
+            parts.append(f"[stderr] {execution_result.stderr}")
+        parts.append(f"[returncode={execution_result.returncode}]")
+        content = "\n".join(parts)
 
     return Observation(
         content=content,
