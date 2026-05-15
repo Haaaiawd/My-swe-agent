@@ -84,7 +84,7 @@
 - **最新架构版本**: `.anws/v1`
 - **活动任务清单: `05A_TASKS.md` + `05B_VERIFICATION_PLAN.md` (blueprint 已生成))
 - **待办任务数: 0 个 blueprint 任务（Sprint 1-3 已完成）；遗留 bug-fix: batch 验证、stream 截断
-- **最近一次更新: `2026-05-15` (Wave 18 Challenge R5 全修复；152 passed / 0 failed；ruff 绿；版本 0.2.0)
+- **最近一次更新: `2026-05-15` (Wave 19 CLI 实时进度面板；152 passed / 0 failed；ruff 绿)
 
 ### 🌊 Wave 1 ✅ — S1 Foundation: 项目骨架初始化
 T1.1.1
@@ -179,6 +179,15 @@ INT-S2
 - CH-R5-05: `main.py`: 诊断文件模板改为 config_error_{timestamp}.txt；test_cli_run 同步
 - 额外: test_executor Windows 平台行为修正；test_parser no_tool_call → no_action 同步
 - 全量测试: 152 passed / 0 failed；ruff 全绿；版本升至 0.2.0
+签名: AUTO
+
+### 🌊 Wave 19 ✅ — CLI 实时进度面板
+- `src/cli/live_display.py`: Rich Live 面板，展示步数/命令/成本/耗时
+- `src/core/state_machine.py`: OBSERVE 循环后触发 step_callback hook
+- `src/core/agent.py`: run() 透传 step_callback 至 StateMachine
+- `src/cli/main.py`: run_cmd 中接入 LiveDisplay 生命周期（start/stop）
+- `tests/integration/test_cli_run.py`: FakeAgent.run() 签名补 step_callback 参数
+- 全量测试: 152 passed / 0 failed，ruff 全绿
 签名: AUTO
 
 
