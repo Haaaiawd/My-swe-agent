@@ -100,8 +100,12 @@ def _extract_message_dict(response: Any) -> dict[str, Any]:
 def _stream_completion(
     model_cfg: dict[str, Any],
     messages: list[dict[str, Any]],
+    token_callback: Any | None = None,
 ) -> ModelResponse:
-    """Call litellm with stream=True, print tokens live, assemble message.
+    """Call litellm with stream=True, assemble message, optionally notify caller per token.
+
+    If *token_callback* is provided it is called with each token string as it
+    arrives; otherwise tokens are written to stdout (fallback for non-Live runs).
 
     Cost is estimated via litellm.token_counter() + cost_per_token()
     because streaming responses do not include API-reported usage stats.
@@ -115,15 +119,18 @@ def _stream_completion(
         **model_cfg.get("extra_params", {}),
     )
 
-    # Collect streamed content and print live
+    # Collect streamed content; notify callback or print to stdout
     full_content = ""
     for chunk in response:
         delta = chunk.choices[0].delta
         token = delta.content or ""
         if token:
-            sys.stdout.write(token)
-            sys.stdout.flush()
             full_content += token
+            if token_callback is not None:
+                token_callback(token)
+            else:
+                sys.stdout.write(token)
+                sys.stdout.flush()
 
     # Estimate cost via token counter (streaming lacks API usage stats)
     cost = 0.0
@@ -164,12 +171,16 @@ def _stream_completion(
 def call_model(
     messages: list[dict[str, Any]],
     config: dict[str, Any],
+    token_callback: Any | None = None,
 ) -> ModelResponse:
     """Call the LLM via litellm with retries and cost extraction.
 
     Args:
         messages: Conversation history (OpenAI-compatible message list).
         config: Merged configuration dict with ``model.*`` keys.
+        token_callback: Optional callable(token: str) called for each streamed
+            token.  When provided, tokens are NOT written to stdout; the caller
+            is responsible for display (e.g. a Rich Live panel).
 
     Returns:
         ModelResponse with the assistant message and cost.
@@ -197,7 +208,7 @@ def call_model(
 
     # Streaming path
     if stream:
-        return _stream_completion(model_cfg, messages)
+        return _stream_completion(model_cfg, messages, token_callback=token_callback)
 
     # Non-streaming path
     response = litellm.completion(

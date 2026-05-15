@@ -1,15 +1,16 @@
 """Live CLI progress display for mini-swe-agent run command.
 
-Renders a real-time status panel using Rich's Live + Layout system.
-Inspired by Claude Code / Codex style: persistent header bar showing
-step progress, current command, cost, and elapsed time.
+Renders a real-time status panel using Rich's Live system.
+Streaming model tokens are captured via token_callback and shown inside
+the panel — NOT printed to stdout — so there is no terminal corruption.
 
-Layout (top of terminal, updates in-place):
-┌─────────────────────────────────────────────────────────┐
-│  mini-swe-agent  ●  running                             │
-│  Step  3 / 80   Cost $0.0012   Elapsed 0:42             │
-│  ❯  echo hello world                                    │
-└─────────────────────────────────────────────────────────┘
+Layout (updates in-place):
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  mini-swe-agent  ● running   model: deepseek-v4-flash                       │
+│  Step   3 / 80  [███░░░░░░░░░░░░░░░░░░]  Cost $0.0012  Elapsed 0:42        │
+│  ❯  echo hello world                                                        │
+│  ··· thinking: def foo(): return 1...                                       │
+└─────────────────────────────────────────────────────────────────────────────┘
 
 Dependencies: rich (already in env via litellm transitive dep).
 """
@@ -31,55 +32,8 @@ _DIM = "dim"
 _YELLOW = "yellow"
 _CYAN = "cyan"
 
-
-def _make_panel(
-    step: int,
-    step_limit: int,
-    command: str,
-    cost: float,
-    elapsed: float,
-    status: str,
-    model: str,
-) -> Panel:
-    """Build a Rich Panel with the current run status."""
-    # Status dot
-    dot_color = _GREEN if status == "running" else _YELLOW
-    status_text = Text()
-    status_text.append(f"  {_BRAND}  ", style="bold white")
-    status_text.append("● ", style=dot_color)
-    status_text.append(status, style=dot_color)
-    status_text.append("   model: ", style=_DIM)
-    status_text.append(model.split("/")[-1], style=_DIM)
-
-    # Progress bar (ASCII, no external deps)
-    bar_width = 20
-    filled = int(bar_width * step / max(step_limit, 1))
-    bar = "█" * filled + "░" * (bar_width - filled)
-
-    # Stats row
-    elapsed_str = _fmt_elapsed(elapsed)
-    stats = Text()
-    stats.append("  Step ", style=_DIM)
-    stats.append(f"{step:>3}", style="bold white")
-    stats.append(f" / {step_limit}  ", style=_DIM)
-    stats.append(f"[{bar}]  ", style=_CYAN)
-    stats.append("Cost ", style=_DIM)
-    stats.append(f"${cost:.4f}", style="bold " + _YELLOW)
-    stats.append("  Elapsed ", style=_DIM)
-    stats.append(elapsed_str, style="white")
-
-    # Command row
-    cmd_preview = command[:120] if command else "(waiting for model...)"
-    cmd_text = Text()
-    cmd_text.append("  ❯  ", style="bold " + _GREEN)
-    cmd_text.append(cmd_preview, style="italic white")
-
-    content = Text.assemble(status_text, "\n", stats, "\n", cmd_text)
-    return Panel(
-        content,
-        border_style=_GREEN if status == "running" else _YELLOW,
-        padding=(0, 1),
-    )
+# Max chars of streaming token buffer shown in the panel
+_TOKEN_PREVIEW_LEN = 120
 
 
 def _fmt_elapsed(seconds: float) -> str:
@@ -92,8 +46,73 @@ def _fmt_elapsed(seconds: float) -> str:
     return f"{m}:{sec:02d}"
 
 
+def _make_panel(
+    step: int,
+    step_limit: int,
+    command: str,
+    cost: float,
+    elapsed: float,
+    status: str,
+    model: str,
+    token_preview: str,
+) -> Panel:
+    """Build a Rich Panel with the current run status."""
+    dot_color = _GREEN if status == "running" else _YELLOW
+
+    # Row 1: brand + status + model
+    row1 = Text()
+    row1.append(f"  {_BRAND}  ", style="bold white")
+    row1.append("● ", style=dot_color)
+    row1.append(status, style=dot_color)
+    row1.append("   model: ", style=_DIM)
+    row1.append(model.split("/")[-1], style=_DIM)
+
+    # Row 2: progress bar + cost + elapsed
+    bar_width = 20
+    filled = int(bar_width * step / max(step_limit, 1))
+    bar = "█" * filled + "░" * (bar_width - filled)
+    elapsed_str = _fmt_elapsed(elapsed)
+    row2 = Text()
+    row2.append("  Step ", style=_DIM)
+    row2.append(f"{step:>3}", style="bold white")
+    row2.append(f" / {step_limit}  ", style=_DIM)
+    row2.append(f"[{bar}]  ", style=_CYAN)
+    row2.append("Cost ", style=_DIM)
+    row2.append(f"${cost:.4f}", style="bold " + _YELLOW)
+    row2.append("  Elapsed ", style=_DIM)
+    row2.append(elapsed_str, style="white")
+
+    # Row 3: last executed command
+    cmd_preview = command[:120] if command else "(waiting for model...)"
+    row3 = Text()
+    row3.append("  ❯  ", style="bold " + _GREEN)
+    row3.append(cmd_preview, style="italic white")
+
+    # Row 4: streaming token preview (only shown while model is thinking)
+    lines: list[Any] = [row1, "\n", row2, "\n", row3]
+    if token_preview:
+        # Collapse newlines to keep the panel single-height
+        preview = token_preview.replace("\n", " ").replace("\r", "")[-_TOKEN_PREVIEW_LEN:]
+        row4 = Text()
+        row4.append("  ··· ", style=_DIM)
+        row4.append(preview, style="dim italic white")
+        lines += ["\n", row4]
+
+    content = Text.assemble(*lines)
+    return Panel(
+        content,
+        border_style=_GREEN if status == "running" else _YELLOW,
+        padding=(0, 1),
+    )
+
+
 class LiveDisplay:
-    """Manages the Rich Live panel for a single agent run."""
+    """Manages the Rich Live panel for a single agent run.
+
+    Provides two callbacks for the state machine:
+    - ``on_step(step, command, cost)``  — called after each completed step
+    - ``on_token(token)``               — called per streamed model token
+    """
 
     def __init__(self, step_limit: int, model: str) -> None:
         self._step_limit = step_limit
@@ -103,7 +122,9 @@ class LiveDisplay:
         self._cost = 0.0
         self._status = "running"
         self._start = time.monotonic()
-        self._console = Console(stderr=True)  # stderr so it doesn't mix with streaming stdout
+        self._token_buf = ""          # accumulates tokens between steps
+        # Single console on stderr; Rich Live owns the terminal area
+        self._console = Console(stderr=True)
         self._live: Live | None = None
 
     def start(self) -> None:
@@ -111,7 +132,7 @@ class LiveDisplay:
         self._live = Live(
             self._render(),
             console=self._console,
-            refresh_per_second=4,
+            refresh_per_second=8,
             transient=False,
         )
         self._live.start()
@@ -119,6 +140,7 @@ class LiveDisplay:
     def stop(self, final_state: str) -> None:
         """Stop the live display and print a final summary line."""
         self._status = final_state
+        self._token_buf = ""
         if self._live:
             self._live.update(self._render())
             self._live.stop()
@@ -136,6 +158,13 @@ class LiveDisplay:
         self._step = step
         self._command = command
         self._cost = cost
+        self._token_buf = ""   # clear token buffer once step is done
+        if self._live:
+            self._live.update(self._render())
+
+    def on_token(self, token: str) -> None:
+        """Callback per streamed model token — shown in the panel preview row."""
+        self._token_buf += token
         if self._live:
             self._live.update(self._render())
 
@@ -149,6 +178,7 @@ class LiveDisplay:
             elapsed=elapsed,
             status=self._status,
             model=self._model,
+            token_preview=self._token_buf,
         )
 
 
@@ -162,7 +192,8 @@ def live_run_display(
     Usage::
 
         with live_run_display(step_limit=80, model="gpt-4o") as display:
-            agent.run(task, step_callback=display.on_step)
+            agent.run(task, step_callback=display.on_step,
+                      token_callback=display.on_token)
     """
     display = LiveDisplay(step_limit=step_limit, model=model)
     display.start()

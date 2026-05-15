@@ -227,12 +227,17 @@ def run_cmd(
     result = None
     try:
         if yolo:
-            result = agent.run(task_description, step_callback=display.on_step)
+            result = agent.run(
+                task_description,
+                step_callback=display.on_step,
+                token_callback=display.on_token,
+            )
         else:
             result = agent.run(
                 task_description,
                 confirm_callback=_confirm_step,
                 step_callback=display.on_step,
+                token_callback=display.on_token,
             )
     finally:
         display.stop(result.final_state if result is not None else "UNKNOWN_ERROR")

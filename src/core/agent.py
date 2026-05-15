@@ -27,6 +27,7 @@ class Agent:
         task: str,
         confirm_callback: Callable[[str], bool] | None = None,
         step_callback: Callable[[int, str, float], None] | None = None,
+        token_callback: Callable[[str], None] | None = None,
     ) -> AgentResult:
         """Run *task* and return the structured result.
 
@@ -37,10 +38,13 @@ class Agent:
             step_callback: Optional callable invoked after each executed step
                 with ``(step_number, command, cumulative_cost)``.  Used by the
                 CLI live progress panel.
+            token_callback: Optional callable invoked per streamed token.
+                When provided, tokens are NOT written to stdout.
         """
         machine = StateMachine(
             self.config,
             confirm_callback=confirm_callback,
             step_callback=step_callback,
+            token_callback=token_callback,
         )
         return machine.run(task)

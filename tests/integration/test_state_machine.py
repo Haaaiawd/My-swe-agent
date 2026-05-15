@@ -25,7 +25,7 @@ class MockModelResponse:
         return bool(self.message.get("tool_calls"))
 
 
-def _mock_call_model_echo_happy(messages, config):
+def _mock_call_model_echo_happy(messages, config, token_callback=None):
     """Return a tool-call response with ``echo hello``."""
     return MockModelResponse(
         tool_calls=[
@@ -35,7 +35,7 @@ def _mock_call_model_echo_happy(messages, config):
     )
 
 
-def _mock_call_model_submission(messages, config):
+def _mock_call_model_submission(messages, config, token_callback=None):
     """Return a text-mode action (any action — we mock the executor)."""
     return MockModelResponse(
         content="```mswea_bash_command\necho hello\n```",
@@ -43,7 +43,7 @@ def _mock_call_model_submission(messages, config):
     )
 
 
-def _mock_call_model_format_error(messages, config):
+def _mock_call_model_format_error(messages, config, token_callback=None):
     """Return a response with no action (triggers FormatError)."""
     return MockModelResponse(content="no action here", cost=0.0)
 
@@ -116,7 +116,7 @@ class TestStateMachineErrorPaths:
     def test_step_limit(self, monkeypatch, tmp_path):
         call_count = 0
 
-        def mock_model(messages, config):
+        def mock_model(messages, config, token_callback=None):
             nonlocal call_count
             call_count += 1
             return MockModelResponse(
@@ -148,7 +148,7 @@ class TestStateMachineErrorPaths:
         """CH-R5-01: exit_immediately terminates loop after first step."""
         call_count = 0
 
-        def mock_model(messages, config):
+        def mock_model(messages, config, token_callback=None):
             nonlocal call_count
             call_count += 1
             return MockModelResponse(

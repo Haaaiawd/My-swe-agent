@@ -44,7 +44,10 @@ class TrajectoryManager:
     ) -> None:
         """Append a message and auto-flush every *AUTO_FLUSH_EVERY* steps."""
         self.trajectory.add_message(message, tool_call_id)
-        if message.get("role") == "tool":
+        # Count a step when an observation is appended.
+        # tool-call protocol uses role="tool"; text protocol uses role="user"
+        # (to avoid provider rejection of orphaned tool messages).
+        if message.get("role") in ("tool", "user"):
             self.trajectory.increment_step()
             self._steps_since_flush += 1
             if self._steps_since_flush >= AUTO_FLUSH_EVERY:

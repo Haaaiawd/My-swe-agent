@@ -46,7 +46,7 @@ class FakeAgent:
     def __init__(self, config: dict[str, Any]) -> None:
         self.config = config
 
-    def run(self, task: str, step_callback=None) -> AgentResult:
+    def run(self, task: str, step_callback=None, token_callback=None) -> AgentResult:
         return AgentResult(
             trajectory_path=Path("/tmp/traj.json"),
             final_state="SUBMITTED",
@@ -156,7 +156,7 @@ def test_run_exit_code_mapping(minimal_config: Path, tmp_path: Path, monkeypatch
     """Core returncode 2 (LIMIT_STEP) maps to CLI exit code 10."""
 
     class LimitStepAgent(FakeAgent):
-        def run(self, task: str, step_callback=None) -> AgentResult:
+        def run(self, task: str, step_callback=None, token_callback=None) -> AgentResult:
             return AgentResult(
                 trajectory_path=Path("/tmp/traj.json"),
                 final_state="LIMIT_STEP",
