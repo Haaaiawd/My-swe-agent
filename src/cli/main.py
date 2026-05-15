@@ -24,6 +24,7 @@ from typing import Any
 import click
 
 from cli.exit_codes import EXIT_CODES, map_agent_result_to_exit_code
+from cli.live_display import LiveDisplay
 from config import ConfigError, ConfigManager
 from core.agent import Agent
 
@@ -210,17 +211,31 @@ def run_cmd(
         cfg["output"] = {}
     cfg["output"]["trajectory_path"] = str(output / "trajectory.json")
 
-    # Run agent
+    # Run agent with live progress display
     agent = Agent(cfg)
     task_description = cfg.get("task_description", "")
+    agent_cfg = cfg.get("agent", {})
+    step_limit = agent_cfg.get("step_limit", 80)
+    model_name = cfg.get("model", {}).get("name", "unknown")
+
+    display = LiveDisplay(step_limit=step_limit, model=model_name)
+    display.start()
 
     def _confirm_step(command: str) -> bool:
         return click.confirm(f"Execute: {command}?", default=False)
 
-    if yolo:
-        result = agent.run(task_description)
-    else:
-        result = agent.run(task_description, confirm_callback=_confirm_step)
+    result = None
+    try:
+        if yolo:
+            result = agent.run(task_description, step_callback=display.on_step)
+        else:
+            result = agent.run(
+                task_description,
+                confirm_callback=_confirm_step,
+                step_callback=display.on_step,
+            )
+    finally:
+        display.stop(result.final_state if result is not None else "UNKNOWN_ERROR")
 
     if verbose:
         _print_summary(result)

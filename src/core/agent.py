@@ -26,6 +26,7 @@ class Agent:
         self,
         task: str,
         confirm_callback: Callable[[str], bool] | None = None,
+        step_callback: Callable[[int, str, float], None] | None = None,
     ) -> AgentResult:
         """Run *task* and return the structured result.
 
@@ -33,6 +34,13 @@ class Agent:
             confirm_callback: Optional callable invoked per-step with the
                 parsed command string.  Should return ``True`` to proceed to
                 execution, ``False`` to interrupt.
+            step_callback: Optional callable invoked after each executed step
+                with ``(step_number, command, cumulative_cost)``.  Used by the
+                CLI live progress panel.
         """
-        machine = StateMachine(self.config, confirm_callback=confirm_callback)
+        machine = StateMachine(
+            self.config,
+            confirm_callback=confirm_callback,
+            step_callback=step_callback,
+        )
         return machine.run(task)

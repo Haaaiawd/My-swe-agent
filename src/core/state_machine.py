@@ -63,9 +63,20 @@ class StateMachine:
         self,
         config: dict[str, Any],
         confirm_callback: Callable[[str], bool] | None = None,
+        step_callback: Callable[[int, str, float], None] | None = None,
     ) -> None:
+        """Initialise the state machine.
+
+        Args:
+            config: Merged configuration dict.
+            confirm_callback: Optional per-step command confirmation hook.
+            step_callback: Optional hook called after each executed step with
+                (step_number, command, cumulative_cost).  Used by the CLI live
+                progress panel.
+        """
         self.config = config
         self.confirm_callback = confirm_callback
+        self.step_callback = step_callback
         self._interrupted = False
         self._obs_renderer = TemplateRenderer(
             jinja2.Environment(
@@ -240,6 +251,14 @@ class StateMachine:
                 ctx.tool_call_id,
             )
             ctx.tool_call_id = None
+
+            # Notify CLI live panel after each completed step
+            if self.step_callback is not None:
+                self.step_callback(
+                    traj_mgr.trajectory.step_counter,
+                    ctx.command or "",
+                    traj_mgr.trajectory.cost_accumulator,
+                )
 
             if ctx.observation.has_submission():
                 return State.SUBMITTED

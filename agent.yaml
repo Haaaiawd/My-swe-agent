@@ -18,8 +18,8 @@ model:
     api_base: "https://openrouter.ai/api/v1"
 
 agent:
-  step_limit: 50
-  cost_limit: 0.1
+  step_limit: 80
+  cost_limit: 0.5
   confirm_mode: false
 
 output:
