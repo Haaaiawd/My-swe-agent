@@ -84,7 +84,7 @@
 - **最新架构版本**: `.anws/v1`
 - **活动任务清单: `05A_TASKS.md` + `05B_VERIFICATION_PLAN.md` (blueprint 已生成))
 - **待办任务数: 0 个 blueprint 任务（Sprint 1-3 已完成）；遗留 bug-fix: batch 验证、stream 截断
-- **最近一次更新: `2026-05-15` (Wave 16 streaming cost/token 修复；142 passed / 2 pre-existing failures；ruff 绿；门禁 APPROVED)
+- **最近一次更新: `2026-05-15` (Wave 18 Challenge R5 全修复；152 passed / 0 failed；ruff 绿；版本 0.2.0)
 
 ### 🌊 Wave 1 ✅ — S1 Foundation: 项目骨架初始化
 T1.1.1
@@ -171,12 +171,14 @@ INT-S2
 - ruff 全绿
 签名: AUTO
 
-### 🌊 Wave 18 — Challenge Report R5 契约漂移修复
-- CH-R5-01: 接入 exit_immediately 真实运行语义
-- CH-R5-02: 实现 command.whitelist 安全模式
-- CH-R5-03: 脱敏 ModelAdapter 消息 preview 日志
-- CH-R5-04: 统一 trajectory schema version 为 v1_jsonl
-- CH-R5-05: 统一 ConfigError 诊断文件命名
+### 🌊 Wave 18 ✅ — Challenge Report R5 契约漂移修复
+- CH-R5-01: `state_machine.py`: OBSERVE 后读取 exit_immediately → EXIT_IMMEDIATELY 终态；`models.py` 新增 EXIT_IMMEDIATELY 枚举；集成测试 +1
+- CH-R5-02: `validator.py`: validate_command 新增 whitelist= 参数；`state_machine.py` 传入 cfg["command"]["whitelist"]；单元测试 +6
+- CH-R5-03: `model_adapter.py`: INFO 级日志改为 role+len，消息内容降为 DEBUG
+- CH-R5-04: `models.py`: schema_version 默认值 v1 → v1_jsonl；test_trajectory/test_models 同步
+- CH-R5-05: `main.py`: 诊断文件模板改为 config_error_{timestamp}.txt；test_cli_run 同步
+- 额外: test_executor Windows 平台行为修正；test_parser no_tool_call → no_action 同步
+- 全量测试: 152 passed / 0 failed；ruff 全绿；版本升至 0.2.0
 签名: AUTO
 
 
