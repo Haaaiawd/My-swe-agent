@@ -112,6 +112,9 @@ class Trajectory:
     messages: list[dict[str, Any]] = field(default_factory=list)
     cost_accumulator: float = 0.0
     step_counter: int = 0
+    start_time: str | None = None
+    end_time: str | None = None
+    duration_seconds: float | None = None
 
     def add_message(
         self,

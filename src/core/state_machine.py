@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import signal
 from collections.abc import Callable
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -94,6 +95,7 @@ class StateMachine:
         """Execute the state-machine loop for *task* and return the result."""
         state = State.MODEL
         trajectory = Trajectory()
+        trajectory.start_time = datetime.now(timezone.utc).isoformat()
         trajectory.add_message({"role": "user", "content": task})
         ctx = StateMachineContext()
         traj_mgr = TrajectoryManager(trajectory)

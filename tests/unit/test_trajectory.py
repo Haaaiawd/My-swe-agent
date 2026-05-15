@@ -39,6 +39,21 @@ class TestTrajectoryManager:
         assert "messages" in data
         assert data["messages"][0]["tool_call_id"] == "tc_1"
 
+    def test_save_trajectory_runtime_stats(self, tmp_path):
+        from datetime import datetime, timezone
+
+        traj = Trajectory()
+        traj.start_time = datetime.now(timezone.utc).isoformat()
+        mgr = TrajectoryManager(traj)
+        mgr.append({"role": "tool", "content": "ok"})
+        path = tmp_path / "traj.json"
+        mgr.save_trajectory(str(path))
+        data = json.loads(path.read_text(encoding="utf-8"))
+        assert data["start_time"] is not None
+        assert data["end_time"] is not None
+        assert data["duration_seconds"] is not None
+        assert data["duration_seconds"] >= 0
+
     def test_100_step_auto_flush(self, tmp_path, monkeypatch):
         traj = Trajectory()
         mgr = TrajectoryManager(traj)

@@ -18,6 +18,7 @@ import json
 import logging
 import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -71,6 +72,16 @@ class TrajectoryManager:
         Returns:
             The final Path where the trajectory was written.
         """
+        # Capture end time and duration if start_time was set
+        if self.trajectory.start_time is not None:
+            end = datetime.now(timezone.utc)
+            self.trajectory.end_time = end.isoformat()
+            try:
+                start_dt = datetime.fromisoformat(self.trajectory.start_time)
+                self.trajectory.duration_seconds = (end - start_dt).total_seconds()
+            except ValueError:
+                pass  # malformed start_time, leave duration as None
+
         target = Path(path)
         data = {
             "schema_version": self.trajectory.schema_version,
@@ -78,6 +89,9 @@ class TrajectoryManager:
             "cost_accumulator": self.trajectory.cost_accumulator,
             "step_counter": self.trajectory.step_counter,
             "final_state": final_state,
+            "start_time": self.trajectory.start_time,
+            "end_time": self.trajectory.end_time,
+            "duration_seconds": self.trajectory.duration_seconds,
         }
 
         try:
