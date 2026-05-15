@@ -83,8 +83,8 @@
 
 - **最新架构版本**: `.anws/v1`
 - **活动任务清单: `05A_TASKS.md` + `05B_VERIFICATION_PLAN.md` (blueprint 已生成))
-- **待办任务数: 19 个开发任务 + 3 个 INT 里程碑（分 3 个 Sprint）
-- **最近一次更新: `2026-05-11` (Challenge Round 4 双重审查 + /change 修复完成；CH-R4-01 Critical 防循环计数器已补充；CH-R4-02 VALIDATE 文档一致性已修复；CH-R4-03 cost_estimate_per_call 默认值已定义；TK-R4-01 T3.1.6 验证计划已补充；门禁 APPROVED，可进入 /forge)
+- **待办任务数: 0 个 blueprint 任务（Sprint 1-3 已完成）；遗留 bug-fix: cost 统计、batch 验证、stream 截断、运行时统计
+- **最近一次更新: `2026-05-15` (Wave 16 streaming cost/token 修复；142 passed / 2 pre-existing failures；ruff 绿；门禁 APPROVED)
 
 ### 🌊 Wave 1 ✅ — S1 Foundation: 项目骨架初始化
 T1.1.1
@@ -150,6 +150,16 @@ INT-S2
 ### 🌊 Wave 15 ✅ — Sprint 3: INT-S3 S3 集成验证
 - 全量测试: 137 passed（115 unit + 22 integration）
 - CLI help: run/batch/check 三子命令全链路可用
+- ruff 全绿
+签名: AUTO
+
+### 🌊 Wave 16 ✅ — 后 Sprint 修复: Streaming Cost/Token 统计
+- `src/core/model_adapter.py`: `_stream_completion` 使用 `litellm.token_counter()` + `litellm.cost_per_token()` 估算流式成本； honoring `cost_missing_strategy`
+- `src/core/state_machine.py`: 每步 assistant 消息嵌入 `cost` 元数据，轨迹可审计
+- `src/cli/checker.py`: 从消息元数据读取真实 cost，替换硬编码 0.0
+- `tests/unit/test_model_adapter.py`: +3 streaming 测试（正常估算、缺失 warn、缺失 error）
+- `tests/unit/test_checker.py`: +3 提取测试（cost 读取、状态映射、ANSI/NUL 清理）
+- 全量测试: 142 passed / 2 pre-existing failures（Windows shell OSError 行为差异 + parser error_type）
 - ruff 全绿
 签名: AUTO
 
