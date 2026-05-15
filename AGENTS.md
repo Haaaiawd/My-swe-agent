@@ -83,7 +83,7 @@
 
 - **最新架构版本**: `.anws/v1`
 - **活动任务清单: `05A_TASKS.md` + `05B_VERIFICATION_PLAN.md` (blueprint 已生成))
-- **待办任务数: 0 个 blueprint 任务（Sprint 1-3 已完成）；遗留 bug-fix: cost 统计、batch 验证、stream 截断、运行时统计
+- **待办任务数: 0 个 blueprint 任务（Sprint 1-3 已完成）；遗留 bug-fix: batch 验证、stream 截断
 - **最近一次更新: `2026-05-15` (Wave 16 streaming cost/token 修复；142 passed / 2 pre-existing failures；ruff 绿；门禁 APPROVED)
 
 ### 🌊 Wave 1 ✅ — S1 Foundation: 项目骨架初始化
@@ -160,6 +160,14 @@ INT-S2
 - `tests/unit/test_model_adapter.py`: +3 streaming 测试（正常估算、缺失 warn、缺失 error）
 - `tests/unit/test_checker.py`: +3 提取测试（cost 读取、状态映射、ANSI/NUL 清理）
 - 全量测试: 142 passed / 2 pre-existing failures（Windows shell OSError 行为差异 + parser error_type）
+- ruff 全绿
+签名: AUTO
+
+### 🌊 Wave 17 ✅ — 后 Sprint 修复: 轨迹运行时统计
+- `src/core/models.py`: Trajectory 新增 start_time / end_time / duration_seconds
+- `src/core/trajectory.py`: save_trajectory() 自动计算 end_time 和 duration
+- `src/core/state_machine.py`: run() 开始时设置 start_time
+- `tests/unit/test_trajectory.py`: +1 runtime stats 测试
 - ruff 全绿
 签名: AUTO
 
