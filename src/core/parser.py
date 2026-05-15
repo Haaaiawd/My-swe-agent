@@ -138,6 +138,18 @@ def parse_action(message: dict[str, Any], protocol: str) -> str:
             "multiple_tool_calls",
         )
 
+    # ── Bare submission marker (text mode) ───────────────────
+    # Model may output COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT as plain text
+    # without any fence block.  Treat it as a valid "command" so the executor
+    # runs it, the shell returns non-zero (command not found), but the
+    # submission marker is still detected by the observer via stdout_original.
+    # Better: just return it directly so executor echoes it and observer picks
+    # it up.  This avoids the shell "command not found" error path.
+    _submit_marker = "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+    stripped = (content or "").strip()
+    if stripped == _submit_marker or stripped.startswith(_submit_marker + "\n"):
+        return f"echo '{_submit_marker}'"
+
     # ── Text-mode detection ───────────────────────────────────
     block_types_present = sum(
         1 for blocks in (fence_blocks, xml_blocks, tool_call_blocks) if blocks

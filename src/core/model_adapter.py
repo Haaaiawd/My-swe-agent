@@ -31,6 +31,24 @@ from core.models import CostMissingError, ModelResponse
 
 logger = logging.getLogger(__name__)
 
+# ── Custom model pricing registry ─────────────────────────────
+# litellm may not know recently-released models. Register them here so
+# token-based cost estimation works correctly.
+# Prices sourced from official DeepSeek API docs (verified 2026-05-15).
+_CUSTOM_MODEL_PRICES: dict[str, dict[str, float]] = {
+    "deepseek/deepseek-v4-flash": {
+        "input_cost_per_token": 0.14 / 1_000_000,   # $0.14 / 1M input tokens
+        "output_cost_per_token": 0.28 / 1_000_000,  # $0.28 / 1M output tokens
+    },
+    "deepseek/deepseek-v4-pro": {
+        "input_cost_per_token": 0.435 / 1_000_000,
+        "output_cost_per_token": 0.87 / 1_000_000,
+    },
+}
+
+for _model, _prices in _CUSTOM_MODEL_PRICES.items():
+    litellm.register_model({_model: _prices})
+
 # Exceptions that warrant a retry (ADR-003)
 _RETRY_EXCEPTIONS: tuple[type[Exception], ...] = (
     litellm.Timeout,
