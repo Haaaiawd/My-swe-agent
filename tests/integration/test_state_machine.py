@@ -143,3 +143,43 @@ class TestStateMachineErrorPaths:
         result = agent.run("step limit test")
         assert result.final_state == "LIMIT_STEP"
         assert result.returncode == 2
+
+    def test_exit_immediately(self, monkeypatch, tmp_path):
+        """CH-R5-01: exit_immediately terminates loop after first step."""
+        call_count = 0
+
+        def mock_model(messages, config):
+            nonlocal call_count
+            call_count += 1
+            return MockModelResponse(
+                tool_calls=[
+                    {
+                        "id": f"tc_{call_count}",
+                        "type": "bash",
+                        "function": {"arguments": {"command": "echo once"}},
+                    }
+                ],
+                cost=0.01,
+            )
+
+        monkeypatch.setattr("core.state_machine.call_model", mock_model)
+
+        agent = Agent(
+            config={
+                "model": {"name": "gpt-4o", "protocol": "tool_call"},
+                "agent": {
+                    "step_limit": 10,
+                    "cost_limit": 10.0,
+                    "max_consecutive_format_errors": 5,
+                    "exit_immediately": True,
+                },
+                "executor": {"timeout": 10},
+                "output": {"trajectory_path": str(tmp_path / "traj.json")},
+            }
+        )
+        result = agent.run("exit immediately test")
+        assert result.final_state == "EXIT_IMMEDIATELY"
+        assert result.returncode == 0
+        # Exactly one model call and one step
+        assert call_count == 1
+        assert result.trajectory_path.exists()

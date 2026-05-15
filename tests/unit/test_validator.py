@@ -40,3 +40,30 @@ class TestValidateCommand:
     def test_dd_if_dev_zero_blocked(self):
         with pytest.raises(CommandValidationError):
             validate_command("dd if=/dev/zero of=/dev/sda")
+
+    # ── CH-R5-02: whitelist mode ─────────────────────────────────
+
+    def test_whitelist_allows_explicit_command(self):
+        # echo is in the whitelist
+        validate_command("echo hello", whitelist=["echo", "cat"])
+
+    def test_whitelist_rejects_unlisted_command(self):
+        with pytest.raises(CommandValidationError) as exc:
+            validate_command("git status", whitelist=["echo", "cat"])
+        assert "not in whitelist" in exc.value.reason
+
+    def test_whitelist_case_insensitive(self):
+        validate_command("ECHO hello", whitelist=["echo"])
+
+    def test_whitelist_still_blocks_blacklist_patterns(self):
+        # Even whitelisted commands must pass blacklist checks
+        with pytest.raises(CommandValidationError):
+            validate_command("rm -rf /", whitelist=["rm"])
+
+    def test_whitelist_empty_list_blocks_everything(self):
+        with pytest.raises(CommandValidationError):
+            validate_command("echo hello", whitelist=[])
+
+    def test_whitelist_none_disables_whitelist_mode(self):
+        # Default path (no whitelist) should allow normal commands
+        validate_command("echo hello", whitelist=None)

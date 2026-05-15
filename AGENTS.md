@@ -171,6 +171,14 @@ INT-S2
 - ruff 全绿
 签名: AUTO
 
+### 🌊 Wave 18 — Challenge Report R5 契约漂移修复
+- CH-R5-01: 接入 exit_immediately 真实运行语义
+- CH-R5-02: 实现 command.whitelist 安全模式
+- CH-R5-03: 脱敏 ModelAdapter 消息 preview 日志
+- CH-R5-04: 统一 trajectory schema version 为 v1_jsonl
+- CH-R5-05: 统一 ConfigError 诊断文件命名
+签名: AUTO
+
 
 
 ---

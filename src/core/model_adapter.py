@@ -187,13 +187,13 @@ def call_model(
     system_prompt = model_cfg.get("system_prompt", DEFAULT_SYSTEM_PROMPT)
     messages = _inject_system_prompt(messages, system_prompt)
 
-    # Debug: log what we're about to send (visible at INFO level for e2e)
+    # CH-R5-03: log structure at INFO, content only at DEBUG
     logger.info("[call_model] sending %d messages -> %s", len(messages), model_cfg.get("name"))
     for i, m in enumerate(messages):
         role = m.get("role", "?")
         content = str(m.get("content", ""))
-        preview = content[:120].replace("\n", " ")
-        logger.info("  msg[%d] %s: %s...", i, role, preview)
+        logger.info("  msg[%d] role=%s len=%d", i, role, len(content))
+        logger.debug("  msg[%d] content preview: %s", i, content[:120].replace("\n", " "))
 
     # Streaming path
     if stream:

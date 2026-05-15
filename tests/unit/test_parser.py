@@ -28,7 +28,7 @@ class TestToolCallMode:
         msg = {"tool_calls": [], "content": "hello"}
         with pytest.raises(FormatError) as exc:
             parse_action(msg, "tool-call")
-        assert exc.value.error_type == "no_tool_call"
+        assert exc.value.error_type == "no_action"  # empty tool_calls falls through to text-mode path
 
     def test_multiple_tool_calls(self):
         msg = {

@@ -32,18 +32,38 @@ DESTRUCTIVE_COMMANDS = {"rm", "mv", "dd", "shred", "mkfs"}
 DANGEROUS_FLAGS = {"-f", "--force", "-rf", "--recursive"}
 
 
-def validate_command(command: str) -> None:
+def validate_command(command: str, whitelist: list[str] | None = None) -> None:
     """Validate *command* for safety.  Raise CommandValidationError if unsafe.
 
     Args:
         command: The parsed shell command string.
+        whitelist: Optional list of allowed command basenames.  When provided,
+            only commands whose base name appears in the whitelist pass;
+            everything else is rejected regardless of blacklist status.
 
     Raises:
-        CommandValidationError: If the command matches a blacklist pattern or
-            combines a destructive command with a dangerous flag.
+        CommandValidationError: If the command is empty, not in the whitelist,
+            matches a blacklist pattern, or combines a destructive command with
+            a dangerous flag.
     """
     if not command or not command.strip():
         raise CommandValidationError(command, "Empty command")
+
+    parts = shlex.split(command, posix=os.name != "nt")
+    if not parts:
+        raise CommandValidationError(command, "Empty command")
+
+    cmd_base = parts[0].lower()
+
+    # CH-R5-02: whitelist mode takes precedence
+    if whitelist is not None:
+        allowed = {w.lower() for w in whitelist}
+        if cmd_base not in allowed:
+            raise CommandValidationError(
+                command,
+                f"Command '{cmd_base}' not in whitelist",
+            )
+        # Even whitelisted commands are still subject to blacklist patterns
 
     # 1. Blacklist regex matching
     for pattern in FORBIDDEN_PATTERNS:
@@ -54,13 +74,10 @@ def validate_command(command: str) -> None:
             )
 
     # 2. Destructive command + dangerous flag combination
-    parts = shlex.split(command, posix=os.name != "nt")
-    if parts:
-        cmd_base = parts[0].lower()
-        if cmd_base in DESTRUCTIVE_COMMANDS:
-            for flag in DANGEROUS_FLAGS:
-                if flag in parts[1:]:
-                    raise CommandValidationError(
-                        command,
-                        f"Dangerous flag '{flag}' used with destructive command '{cmd_base}'",
-                    )
+    if cmd_base in DESTRUCTIVE_COMMANDS:
+        for flag in DANGEROUS_FLAGS:
+            if flag in parts[1:]:
+                raise CommandValidationError(
+                    command,
+                    f"Dangerous flag '{flag}' used with destructive command '{cmd_base}'",
+                )

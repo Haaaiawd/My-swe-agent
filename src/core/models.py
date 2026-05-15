@@ -31,6 +31,7 @@ class State(str, Enum):
     LIMIT_STEP = "LIMIT_STEP"
     LIMIT_COST = "LIMIT_COST"
     INTERRUPT = "INTERRUPT"
+    EXIT_IMMEDIATELY = "EXIT_IMMEDIATELY"
     FATAL_CONFIG = "FATAL_CONFIG"
     UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
@@ -108,7 +109,7 @@ class ModelResponse:
 class Trajectory:
     """Execution trajectory record (schema v1_jsonl)."""
 
-    schema_version: str = "v1"
+    schema_version: str = "v1_jsonl"
     messages: list[dict[str, Any]] = field(default_factory=list)
     cost_accumulator: float = 0.0
     step_counter: int = 0

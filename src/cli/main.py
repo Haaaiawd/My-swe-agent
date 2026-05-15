@@ -51,7 +51,7 @@ def _confirm_continue() -> bool:
 
 # ── Diagnostic helper ─────────────────────────────────────────
 
-_DIAGNOSTIC_FILENAME_TEMPLATE = "diagnostic_{timestamp}.json"
+_DIAGNOSTIC_FILENAME_TEMPLATE = "config_error_{timestamp}.txt"
 
 
 def _write_diagnostic_file(output_dir: Path, exc: ConfigError) -> Path:

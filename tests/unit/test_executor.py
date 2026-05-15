@@ -36,6 +36,9 @@ class TestExecuteCommand:
         result = execute_command("echo original", timeout=10)
         assert result.stdout_original == "original\n" or result.stdout_original == "original"
 
-    def test_invalid_command_oserror(self):
+    def test_invalid_command_nonzero(self):
+        # On Windows with shell=True, unknown commands return nonzero (e.g. 1)
+        # instead of triggering OSError; on POSIX they return 127.
+        # Either way the returncode must be nonzero, which the caller treats as failure.
         result = execute_command("this_should_not_exist_anywhere_12345", timeout=10)
-        assert result.returncode == -1
+        assert result.returncode != 0

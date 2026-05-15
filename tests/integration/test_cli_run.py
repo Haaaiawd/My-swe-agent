@@ -109,8 +109,8 @@ def test_run_config_error_writes_diagnostic(
 
     assert exc_info.value.code == EXIT_CODES["AGENT_FATAL_CONFIG"]
 
-    # Diagnostic file written
-    diag_files = list(output_dir.glob("diagnostic_*.json"))
+    # Diagnostic file written (CH-R5-05: config_error_<timestamp>.txt)
+    diag_files = list(output_dir.glob("config_error_*.txt"))
     assert len(diag_files) == 1
     diag = json.loads(diag_files[0].read_text(encoding="utf-8"))
     assert diag["error_type"] == "ConfigError"

@@ -39,6 +39,7 @@ TERMINAL_STATES = {
     State.LIMIT_STEP,
     State.LIMIT_COST,
     State.INTERRUPT,
+    State.EXIT_IMMEDIATELY,
     State.FATAL_CONFIG,
     State.UNKNOWN_ERROR,
 }
@@ -49,6 +50,7 @@ EXITCODE_MAP: dict[State, int] = {
     State.LIMIT_STEP: 2,
     State.LIMIT_COST: 3,
     State.INTERRUPT: 4,
+    State.EXIT_IMMEDIATELY: 0,
     State.FATAL_CONFIG: 5,
     State.UNKNOWN_ERROR: 6,
 }
@@ -193,9 +195,10 @@ class StateMachine:
             ctx.consecutive_format_errors = 0
             ctx.command = command
 
-            # VALIDATE sub-step (CH-R4-02)
+            # VALIDATE sub-step (CH-R4-02 / CH-R5-02)
+            whitelist = cfg.get("command", {}).get("whitelist")
             try:
-                validate_command(ctx.command)
+                validate_command(ctx.command, whitelist=whitelist)
             except Exception as exc:
                 traj_mgr.append(
                     {"role": "system", "content": f"Validation error: {exc}"}, ctx.tool_call_id
@@ -246,6 +249,11 @@ class StateMachine:
                 return State.LIMIT_STEP
             if traj_mgr.trajectory.cost_accumulator >= cost_limit:
                 return State.LIMIT_COST
+
+            # CH-R5-01: honour exit_immediately configuration
+            if agent_cfg.get("exit_immediately", False):
+                logger.info("exit_immediately enabled; terminating after first step")
+                return State.EXIT_IMMEDIATELY
 
             return State.MODEL
 

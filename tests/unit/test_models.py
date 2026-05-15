@@ -121,7 +121,7 @@ class TestTrajectory:
 
     def test_default_schema_version(self):
         traj = Trajectory()
-        assert traj.schema_version == "v1"
+        assert traj.schema_version == "v1_jsonl"
 
 
 class TestStateMachineContext:
