@@ -162,7 +162,10 @@ class StateMachine:
                 if tool_calls:
                     ctx.tool_call_id = tool_calls[0].get("id")
 
-            traj_mgr.append(ctx.response.message)
+            # Embed per-step cost into the trajectory message for later audit
+            msg = dict(ctx.response.message)
+            msg["cost"] = ctx.response.cost
+            traj_mgr.append(msg)
             return State.PARSE
 
         if state == State.PARSE:

@@ -70,7 +70,7 @@ def _extract_steps(trajectory_data: dict[str, Any]) -> list[dict[str, Any]]:
                     "step_index": step_index,
                     "action": action,
                     "status": "MODEL",
-                    "cost": 0.0,
+                    "cost": msg.get("cost", 0.0),
                 }
             )
         elif role == "tool":
@@ -98,7 +98,7 @@ def _extract_steps(trajectory_data: dict[str, Any]) -> list[dict[str, Any]]:
                     "step_index": step_index,
                     "action": _clean(content)[:80],
                     "status": status,
-                    "cost": 0.0,
+                    "cost": msg.get("cost", 0.0),
                 }
             )
 

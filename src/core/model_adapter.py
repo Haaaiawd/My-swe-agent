@@ -101,9 +101,14 @@ def _stream_completion(
     model_cfg: dict[str, Any],
     messages: list[dict[str, Any]],
 ) -> ModelResponse:
-    """Call litellm with stream=True, print tokens live, assemble message."""
+    """Call litellm with stream=True, print tokens live, assemble message.
+
+    Cost is estimated via litellm.token_counter() + cost_per_token()
+    because streaming responses do not include API-reported usage stats.
+    """
+    model_name = model_cfg.get("name", "gpt-4o")
     response = litellm.completion(
-        model=model_cfg.get("name", "gpt-4o"),
+        model=model_name,
         messages=messages,
         api_key=model_cfg.get("api_key"),
         stream=True,
@@ -120,10 +125,33 @@ def _stream_completion(
             sys.stdout.flush()
             full_content += token
 
-    # Streaming responses have no tool_calls; cost is unavailable
+    # Estimate cost via token counter (streaming lacks API usage stats)
+    cost = 0.0
+    cost_calculation_method = "missing"
+    try:
+        prompt_tokens = litellm.token_counter(model=model_name, messages=messages)
+        completion_tokens = litellm.token_counter(model=model_name, text=full_content)
+        prompt_cost, completion_cost = litellm.cost_per_token(
+            model=model_name,
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+        )
+        cost = prompt_cost + completion_cost
+        cost_calculation_method = "token_based"
+    except Exception as exc:
+        strategy = model_cfg.get("cost_missing_strategy", "warn")
+        if strategy == "error":
+            raise CostMissingError(f"Cost estimation failed for streaming: {exc}") from exc
+        if strategy == "warn":
+            logger.warning("Streaming cost estimation failed: %s", exc)
+
     return ModelResponse(
-        message={"role": "assistant", "content": full_content},
-        cost=0.0,
+        message={
+            "role": "assistant",
+            "content": full_content,
+            "cost_calculation_method": cost_calculation_method,
+        },
+        cost=cost,
     )
 
 

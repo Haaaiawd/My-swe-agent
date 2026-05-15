@@ -7,6 +7,7 @@ cost_calculation_method field.
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -105,4 +106,112 @@ def test_cost_missing_error(monkeypatch):
         call_model(
             messages=[{"role": "user", "content": "test"}],
             config={"model": {"name": "gpt-4o", "cost_missing_strategy": "error"}},
+        )
+
+
+# ── Streaming tests ─────────────────────────────────────────────
+
+
+class MockDelta:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+
+class MockStreamChoice:
+    def __init__(self, content: str) -> None:
+        self.delta = MockDelta(content)
+
+
+class MockStreamChunk:
+    def __init__(self, content: str) -> None:
+        self.choices = [MockStreamChoice(content)]
+
+
+def test_streaming_cost_estimation(monkeypatch):
+    """Streaming path estimates cost via token_counter + cost_per_token."""
+
+    def mock_completion(*, model, messages, api_key, stream, **kwargs):
+        assert stream is True
+        return [MockStreamChunk("hello "), MockStreamChunk("world")]
+
+    monkeypatch.setattr("core.model_adapter.litellm.completion", mock_completion)
+
+    token_call_log: list[tuple[str, Any]] = []
+
+    def mock_token_counter(*, model, messages=None, text=None):
+        if messages is not None:
+            token_call_log.append(("prompt", messages))
+            return 10
+        token_call_log.append(("completion", text))
+        return 5
+
+    monkeypatch.setattr("core.model_adapter.litellm.token_counter", mock_token_counter)
+
+    def mock_cost_per_token(*, model, prompt_tokens, completion_tokens):
+        return (prompt_tokens * 1e-5, completion_tokens * 2e-5)
+
+    monkeypatch.setattr("core.model_adapter.litellm.cost_per_token", mock_cost_per_token)
+
+    result = call_model(
+        messages=[{"role": "user", "content": "test"}],
+        config={"model": {"name": "gpt-4o", "api_key": "sk-test", "stream": True}},
+    )
+    assert isinstance(result, ModelResponse)
+    assert result.cost == pytest.approx(10 * 1e-5 + 5 * 2e-5)
+    assert result.message["content"] == "hello world"
+    assert result.message["cost_calculation_method"] == "token_based"
+
+
+def test_streaming_cost_missing_warn(monkeypatch):
+    """Streaming cost estimation failure falls back to 0 with warn strategy."""
+
+    def mock_completion(*, model, messages, api_key, stream, **kwargs):
+        return [MockStreamChunk("hi")]
+
+    monkeypatch.setattr("core.model_adapter.litellm.completion", mock_completion)
+
+    def mock_token_counter(*, model, messages=None, text=None):
+        raise RuntimeError("token counter failed")
+
+    monkeypatch.setattr("core.model_adapter.litellm.token_counter", mock_token_counter)
+
+    result = call_model(
+        messages=[{"role": "user", "content": "test"}],
+        config={
+            "model": {
+                "name": "gpt-4o",
+                "api_key": "sk-test",
+                "stream": True,
+                "cost_missing_strategy": "warn",
+            }
+        },
+    )
+    assert result.cost == pytest.approx(0.0)
+    assert result.message["cost_calculation_method"] == "missing"
+
+
+def test_streaming_cost_missing_error(monkeypatch):
+    """Streaming cost estimation failure raises CostMissingError with error strategy."""
+
+    def mock_completion(*, model, messages, api_key, stream, **kwargs):
+        return [MockStreamChunk("hi")]
+
+    monkeypatch.setattr("core.model_adapter.litellm.completion", mock_completion)
+
+    def mock_token_counter(*, model, messages=None, text=None):
+        raise RuntimeError("token counter failed")
+
+    monkeypatch.setattr("core.model_adapter.litellm.token_counter", mock_token_counter)
+
+    with pytest.raises(CostMissingError):
+        call_model(
+            messages=[{"role": "user", "content": "test"}],
+            config={
+                "model": {
+                    "name": "gpt-4o",
+                    "api_key": "sk-test",
+                    "stream": True,
+                    "cost_missing_strategy": "error",
+                }
+            },
         )
