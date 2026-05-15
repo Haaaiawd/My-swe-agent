@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "mini-swe-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "A minimal SWE agent for automated programming task evaluation"
 readme = "README.md"
 requires-python = ">=3.10"

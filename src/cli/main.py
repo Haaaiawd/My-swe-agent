@@ -96,7 +96,7 @@ def _print_summary(result: Any) -> None:
         "⚠️  This tool executes shell commands automatically. Use with caution."
     )
 )
-@click.version_option(version="0.1.0", prog_name="mini-swe-agent")
+@click.version_option(version="0.2.0", prog_name="mini-swe-agent")
 def cli() -> None:
     """mini SWE Agent CLI."""
     pass
