@@ -246,8 +246,11 @@ class StateMachine:
                     ctx.observation.content, max_len
                 )
 
+            # text mode: no tool_call_id, use "user" role to avoid
+            # provider rejection of orphaned tool messages (e.g. DeepSeek)
+            obs_role = "tool" if ctx.tool_call_id else "user"
             traj_mgr.append(
-                {"role": "tool", "content": ctx.observation.content},
+                {"role": obs_role, "content": ctx.observation.content},
                 ctx.tool_call_id,
             )
             ctx.tool_call_id = None
@@ -284,9 +287,13 @@ class StateMachine:
 
     @staticmethod
     def _extract_overall_output(trajectory: Trajectory) -> str | None:
-        """Extract the overall submission text from the trajectory."""
+        """Extract the overall submission text from the trajectory.
+
+        Checks both ``tool`` (tool-call protocol) and ``user`` (text protocol)
+        observation messages since text-mode stores observations as user role.
+        """
         for msg in reversed(trajectory.messages):
-            if msg.get("role") == "tool":
+            if msg.get("role") in ("tool", "user"):
                 content = msg.get("content", "")
                 lines = content.splitlines()
                 if lines and lines[0].strip() == "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT":
