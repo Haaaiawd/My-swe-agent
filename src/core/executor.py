@@ -1,24 +1,33 @@
 """Executor: shell command execution via subprocess.
 
-Uses ``shlex.split(posix=not is_windows)`` with ``shell=False`` for safety.
-Captures returncode, stdout, stderr, and preserves the original stdout
-in ``stdout_original`` for submission-marker detection (ADR-006).
+Uses ``shell=True`` so the command string is interpreted by the system shell,
+preserving pipes, redirections, and built-ins.  Forces UTF-8 output decoding
+with ``errors="replace"`` so Windows GBK/CP936 consoles never cause a
+UnicodeDecodeError that silently drops all output (Windows-specific fix).
 
 Timeout (subprocess.TimeoutExpired) terminates the process and records
 ``error_type="TIMEOUT"``; no retries are performed (ADR-003).
 
-Dependencies: os, shlex, subprocess; core.models.ExecutionResult.
+Dependencies: os, subprocess; core.models.ExecutionResult.
 Test coverage: tests/unit/test_executor.py.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import subprocess
 
 from core.models import ExecutionResult
 
 logger = logging.getLogger(__name__)
+
+# Force UTF-8 on Windows so GBK/CP936 console output never crashes the reader.
+# PYTHONUTF8=1 is propagated to child processes; PYTHONIOENCODING covers the
+# subprocess text-mode pipe decoder used by this process.
+_CHILD_ENV: dict[str, str] | None = None
+if os.name == "nt":
+    _CHILD_ENV = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
 
 
 def execute_command(command: str, timeout: float = 10.0) -> ExecutionResult:
@@ -43,6 +52,9 @@ def execute_command(command: str, timeout: float = 10.0) -> ExecutionResult:
             timeout=timeout,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=_CHILD_ENV,
             check=False,
         )
         logger.info(
