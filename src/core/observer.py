@@ -64,11 +64,15 @@ def observe_result(
         raw = execution_result.stdout_original or execution_result.stdout or ""
         cleaned = _normalize(_strip_ansi(raw))
         lines = cleaned.splitlines()
-        if lines and lines[0] == SUBMISSION_MARKER:
-            submitted = True
-            # submission_text may be empty string (no extra lines) — that's fine;
-            # use None only when marker itself is absent, not when output is empty.
-            submission_text = "\n".join(lines[1:]) if len(lines) > 1 else ""
+        if lines:
+            # Strip surrounding quotes that shells add when model writes
+            # echo 'MARKER' or echo "MARKER" — the quotes end up in stdout.
+            first = lines[0].strip().strip("'\"")
+            if first == SUBMISSION_MARKER:
+                submitted = True
+                # submission_text may be empty string (no extra lines) — that's fine;
+                # use None only when marker itself is absent, not when output is empty.
+                submission_text = "\n".join(lines[1:]) if len(lines) > 1 else ""
 
     # Observation template rendering (with fallback per CH-R3-06)
     if template_renderer is not None:

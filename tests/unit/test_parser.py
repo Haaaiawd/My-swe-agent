@@ -100,3 +100,17 @@ class TestTextMode:
         with pytest.raises(FormatError) as exc:
             parse_action(msg, "text")
         assert exc.value.error_type == "empty_command"
+
+    def test_bare_submission_marker(self):
+        """Bare COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT → echo MARKER (no quotes)."""
+        marker = "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+        msg = {"content": marker}
+        result = parse_action(msg, "text")
+        assert result == f"echo {marker}"
+
+    def test_fence_submission_marker(self):
+        """Fence block containing only the marker → echo MARKER."""
+        marker = "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
+        msg = {"content": f"```mswea_bash_command\n{marker}\n```"}
+        result = parse_action(msg, "text")
+        assert result == f"echo {marker}"

@@ -138,17 +138,20 @@ def parse_action(message: dict[str, Any], protocol: str) -> str:
             "multiple_tool_calls",
         )
 
-    # ── Bare submission marker (text mode) ───────────────────
-    # Model may output COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT as plain text
-    # without any fence block.  Treat it as a valid "command" so the executor
-    # runs it, the shell returns non-zero (command not found), but the
-    # submission marker is still detected by the observer via stdout_original.
-    # Better: just return it directly so executor echoes it and observer picks
-    # it up.  This avoids the shell "command not found" error path.
+    # ── Submission marker detection (all modes) ──────────────
+    # The model may output COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT in several ways:
+    #   1. Bare text (no fence)
+    #   2. Inside a fence block  ```mswea_bash_command\nCOMPLETE_...\n```
+    # In all cases convert to `echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT`
+    # (no quotes) so the observer sees the exact marker string in stdout.
     _submit_marker = "COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT"
     stripped = (content or "").strip()
+    # Bare text path
     if stripped == _submit_marker or stripped.startswith(_submit_marker + "\n"):
-        return f"echo '{_submit_marker}'"
+        return f"echo {_submit_marker}"
+    # Fence block path — check if the single extracted block is just the marker
+    if len(text_blocks) == 1 and text_blocks[0].strip() == _submit_marker:
+        return f"echo {_submit_marker}"
 
     # ── Text-mode detection ───────────────────────────────────
     block_types_present = sum(
