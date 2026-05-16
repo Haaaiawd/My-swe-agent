@@ -31,7 +31,7 @@ from core.agent import Agent
 # ── Risk banner ───────────────────────────────────────────────
 
 _RISK_BANNER = """\
-⚠️  Warning: This tool executes shell commands automatically.
+[!] Warning: This tool executes shell commands automatically.
     Review the task description and configuration before running.
     Use --yolo with caution.
 """
@@ -94,7 +94,7 @@ def _print_summary(result: Any) -> None:
 @click.group(
     help=(
         "mini SWE Agent — automated programming task evaluation.\n\n"
-        "⚠️  This tool executes shell commands automatically. Use with caution."
+        "[!] This tool executes shell commands automatically. Use with caution."
     )
 )
 @click.version_option(version="0.2.0", prog_name="mini-swe-agent")
