@@ -96,6 +96,7 @@ class ModelResponse:
 
     message: dict[str, Any]
     cost: float
+    prompt_tokens: int = 0  # context size sent to the model this step
 
     def is_tool_call(self) -> bool:
         """Return ``True`` if the response contains tool calls."""

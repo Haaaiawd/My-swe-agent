@@ -150,9 +150,10 @@ def _stream_completion(
                 sys.stdout.write(token)
                 sys.stdout.flush()
 
-    # Estimate cost via token counter (streaming lacks API usage stats)
+    # Estimate cost + count tokens (streaming lacks API usage stats)
     cost = 0.0
     cost_calculation_method = "missing"
+    prompt_tokens = 0
     try:
         prompt_tokens = litellm.token_counter(model=model_name, messages=messages)
         completion_tokens = litellm.token_counter(model=model_name, text=full_content)
@@ -177,6 +178,7 @@ def _stream_completion(
             "cost_calculation_method": cost_calculation_method,
         },
         cost=cost,
+        prompt_tokens=prompt_tokens,
     )
 
 
@@ -265,4 +267,13 @@ def call_model(
     message = _extract_message_dict(response)
     message["cost_calculation_method"] = cost_calculation_method
 
-    return ModelResponse(message=message, cost=float(cost))
+    # Extract prompt_tokens from API usage if available
+    ns_prompt_tokens = 0
+    try:
+        usage = getattr(response, "usage", None)
+        if usage is not None:
+            ns_prompt_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+    except Exception:
+        pass
+
+    return ModelResponse(message=message, cost=float(cost), prompt_tokens=ns_prompt_tokens)

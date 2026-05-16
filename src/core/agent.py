@@ -26,7 +26,7 @@ class Agent:
         self,
         task: str,
         confirm_callback: Callable[[str], bool] | None = None,
-        step_callback: Callable[[int, str, float], None] | None = None,
+        step_callback: Callable[[int, str, float, int], None] | None = None,
         token_callback: Callable[[str], None] | None = None,
     ) -> AgentResult:
         """Run *task* and return the structured result.

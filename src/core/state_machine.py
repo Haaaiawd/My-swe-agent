@@ -63,7 +63,7 @@ class StateMachine:
         self,
         config: dict[str, Any],
         confirm_callback: Callable[[str], bool] | None = None,
-        step_callback: Callable[[int, str, float], None] | None = None,
+        step_callback: Callable[[int, str, float, int], None] | None = None,
         token_callback: Callable[[str], None] | None = None,
     ) -> None:
         """Initialise the state machine.
@@ -72,8 +72,8 @@ class StateMachine:
             config: Merged configuration dict.
             confirm_callback: Optional per-step command confirmation hook.
             step_callback: Optional hook called after each executed step with
-                (step_number, command, cumulative_cost).  Used by the CLI live
-                progress panel.
+                (step_number, command, cumulative_cost, ctx_tokens).
+                Used by the CLI live progress panel.
             token_callback: Optional hook called per streamed token.  When set,
                 tokens are NOT written to stdout; the caller handles display.
         """
@@ -263,10 +263,12 @@ class StateMachine:
 
             # Notify CLI live panel after each completed step
             if self.step_callback is not None:
+                ctx_tokens = ctx.response.prompt_tokens if ctx.response else 0
                 self.step_callback(
                     traj_mgr.trajectory.step_counter,
                     ctx.command or "",
                     traj_mgr.trajectory.cost_accumulator,
+                    ctx_tokens,
                 )
 
             if ctx.observation.has_submission():

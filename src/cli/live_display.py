@@ -46,6 +46,15 @@ def _fmt_elapsed(seconds: float) -> str:
     return f"{m}:{sec:02d}"
 
 
+def _fmt_tokens(n: int) -> str:
+    """Format token count as e.g. '12.3k' or '1.2M'."""
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.1f}M"
+    if n >= 1_000:
+        return f"{n / 1_000:.1f}k"
+    return str(n)
+
+
 def _make_panel(
     step: int,
     step_limit: int,
@@ -55,6 +64,7 @@ def _make_panel(
     status: str,
     model: str,
     token_preview: str,
+    ctx_tokens: int = 0,
 ) -> Panel:
     """Build a Rich Panel with the current run status."""
     dot_color = _GREEN if status == "running" else _YELLOW
@@ -67,7 +77,7 @@ def _make_panel(
     row1.append("   model: ", style=_DIM)
     row1.append(model.split("/")[-1], style=_DIM)
 
-    # Row 2: progress bar + cost + elapsed
+    # Row 2: progress bar + cost + elapsed + context
     bar_width = 20
     filled = int(bar_width * step / max(step_limit, 1))
     bar = "█" * filled + "░" * (bar_width - filled)
@@ -79,6 +89,9 @@ def _make_panel(
     row2.append(f"[{bar}]  ", style=_CYAN)
     row2.append("Cost ", style=_DIM)
     row2.append(f"${cost:.4f}", style="bold " + _YELLOW)
+    if ctx_tokens:
+        row2.append("  Ctx ", style=_DIM)
+        row2.append(_fmt_tokens(ctx_tokens), style="bold " + _CYAN)
     row2.append("  Elapsed ", style=_DIM)
     row2.append(elapsed_str, style="white")
 
@@ -120,6 +133,7 @@ class LiveDisplay:
         self._step = 0
         self._command = ""
         self._cost = 0.0
+        self._ctx_tokens = 0
         self._status = "running"
         self._start = time.monotonic()
         self._token_buf = ""          # accumulates tokens between steps
@@ -153,11 +167,12 @@ class LiveDisplay:
             f"[dim]{self._step} steps  ${self._cost:.4f}  {_fmt_elapsed(elapsed)}[/dim]"
         )
 
-    def on_step(self, step: int, command: str, cost: float) -> None:
+    def on_step(self, step: int, command: str, cost: float, ctx_tokens: int = 0) -> None:
         """Callback for each completed step — called from state machine."""
         self._step = step
         self._command = command
         self._cost = cost
+        self._ctx_tokens = ctx_tokens
         self._token_buf = ""   # clear token buffer once step is done
         if self._live:
             self._live.update(self._render())
@@ -179,6 +194,7 @@ class LiveDisplay:
             status=self._status,
             model=self._model,
             token_preview=self._token_buf,
+            ctx_tokens=self._ctx_tokens,
         )
 
 
