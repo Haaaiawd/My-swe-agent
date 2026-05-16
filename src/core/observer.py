@@ -66,7 +66,9 @@ def observe_result(
         lines = cleaned.splitlines()
         if lines and lines[0] == SUBMISSION_MARKER:
             submitted = True
-            submission_text = "\n".join(lines[1:]) if len(lines) > 1 else None
+            # submission_text may be empty string (no extra lines) — that's fine;
+            # use None only when marker itself is absent, not when output is empty.
+            submission_text = "\n".join(lines[1:]) if len(lines) > 1 else ""
 
     # Observation template rendering (with fallback per CH-R3-06)
     if template_renderer is not None:

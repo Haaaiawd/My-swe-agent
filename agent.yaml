@@ -1,21 +1,25 @@
 task_description: |
-  Read requirements.md first to understand the task, then create demo.html.
+  Your working directory is D:\PROJECTALL\My-swe-agent (Windows path).
+  The file requirements.md already exists there — read it first to get the task.
 
-  You must output exactly ONE bash command per step wrapped in:
-  ```mswea_bash_command
-  <command here>
-  ```
-
-  When complete, submit with:
-  COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
+  Rules:
+  - Output exactly ONE bash command per step, wrapped in:
+    ```mswea_bash_command
+    <command here>
+    ```
+  - Start with: cat requirements.md
+  - Do NOT search for files — they are in the current directory.
+  - When ALL required files are created and verified, submit with:
+    COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT
 
 model:
-  name: "openrouter/poolside/laguna-m.1:free"
+  name: "deepseek/deepseek-v4-flash"
   protocol: "text"
   api_key: "${MINI_SWE_MODEL__API_KEY}"
   stream: true
+  cost_missing_strategy: "ignore"
   extra_params:
-    api_base: "https://openrouter.ai/api/v1"
+    api_base: "https://api.deepseek.com"
 
 agent:
   step_limit: 80

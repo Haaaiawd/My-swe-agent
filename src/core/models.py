@@ -83,8 +83,12 @@ class Observation:
     submission_text: str | None = None
 
     def has_submission(self) -> bool:
-        """Return ``True`` if a submission was detected and extracted."""
-        return self.submitted and self.submission_text is not None
+        """Return ``True`` if a submission marker was detected.
+
+        submission_text may be an empty string when the marker is the only
+        line of output — that is still a valid submission.
+        """
+        return self.submitted
 
 
 # ── Model Response ──────────────────────────────────────────────

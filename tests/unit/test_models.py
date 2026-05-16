@@ -77,9 +77,15 @@ class TestObservation:
         obs = Observation(content="ok", submitted=True, submission_text="patch")
         assert obs.has_submission()
 
-    def test_has_submission_no_text(self):
+    def test_has_submission_empty_text(self):
+        # submission_text="" means marker was the only output line — still valid
+        obs = Observation(content="ok", submitted=True, submission_text="")
+        assert obs.has_submission()
+
+    def test_has_submission_none_text(self):
+        # submitted=True always means has_submission(), regardless of text
         obs = Observation(content="ok", submitted=True, submission_text=None)
-        assert not obs.has_submission()
+        assert obs.has_submission()
 
     def test_has_submission_not_submitted(self):
         obs = Observation(content="ok", submitted=False, submission_text="patch")
